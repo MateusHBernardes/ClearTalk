@@ -1,0 +1,93 @@
+body {
+    background-color: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+.container-fluid {
+    max-width: 900px;
+}
+.header-icons {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+.logout-button, .back-button {
+    width: 50px;
+    height: 50px;
+    background-color: #8bc34a;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    transition: background-color 0.3s;
+}
+.logout-button:hover, .back-button:hover {
+    background-color: #7cb342;
+}
+.logoIcon {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 20px;
+}
+.card-historico {
+    background-color: #b3e5a3;
+    border: 2px solid #8bc34a;
+    border-radius: 10px;
+    padding: 20px;
+    width: 100%;
+    margin-top: 20px;
+}
+.card-historico .card-title {
+    color: #4CAF50;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.table-responsive {
+    margin-top: 10px;
+}
+.table th, .table td {
+    border: none;
+    vertical-align: middle;
+    color: #4CAF50;
+    font-weight: bold;
+}
+.table thead th {
+    text-align: center;
+    border-bottom: 2px solid #8bc34a;
+}
+.table tbody tr {
+    border-bottom: 1px solid #c5e1a5;
+}
+.table-custom-row td {
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+.action-buttons button {
+    background-color: transparent;
+    border: none;
+    color: #4CAF50;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 5px;
+}
+.editable-field {
+    border: none;
+    background-color: transparent;
+    font-weight: bold;
+    color: #4CAF50;
+    width: 100%;
+    padding: 0;
+}
+.editable-field:focus {
+    outline: none;
+    border-bottom: 1px dashed #4CAF50;
+}
