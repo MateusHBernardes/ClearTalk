@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+:root {
+    --color-background: #f0f0f0;
+    --color-form-bg: #cce7e8; /* Azul claro do formulário */
+    --color-history-bg: #e3eec1; /* Verde claro do histórico */
+    --color-input-bg: #d9e6a1; /* Verde dos inputs e header da tabela */
+    --color-button: #93b32b; /* Verde escuro dos botões */
+    --color-button-hover: #7b9623;
+    --color-text: #333;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text);
+}
+
+header .logo i {
+    color: var(--color-button);
+}
+
+.btn-logout {
+    background-color: var(--color-button);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    transition: background-color 0.3s;
+}
+
+.btn-logout:hover {
+    background-color: var(--color-button-hover);
+    color: white;
+}
+
+.form-container {
+    background-color: var(--color-form-bg);
+}
+
+.history-container {
+    background-color: var(--color-history-bg);
+}
+
+.form-label {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.form-control, .form-select {
+    background-color: var(--color-input-bg);
+    border: none;
+    border-radius: 5px;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--color-input-bg);
+    box-shadow: 0 0 0 0.25rem rgba(147, 179, 43, 0.25);
+    border: none;
+}
+
+.form-control[readonly] {
+    opacity: 0.7;
+}
+
+.btn-custom-save {
+    background-color: var(--color-button);
+    color: white;
+    font-weight: bold;
+    padding: 10px 40px;
+    border: none;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+.btn-custom-save:hover {
+    background-color: var(--color-button-hover);
+    color: white;
+}
+
+h2 {
+    font-weight: bold;
+}
+
+.table {
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table thead {
+    background-color: var(--color-input-bg);
+}
+
+.table th {
+    font-weight: bold;
+    border: none;
+}
+
+.table td {
+    vertical-align: middle;
+    border-top: 1px solid #ddd;
+}
+
+.action-icon {
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.icon-edit {
+    color: #0d6efd;
+}
+.icon-edit:hover {
+    color: #0a58ca;
+}
+
+.icon-send {
+    color: #198754;
+}
+.icon-send:hover {
+    color: #146c43;
+}
+.icon-send.sent {
+    color: #6c757d; /* Cinza para quando já foi enviado */
+    cursor: not-allowed;
+}
+
+/* Indicador de status visual */
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+.status-saved {
+    background-color: #ffc107; /* Amarelo: Salvo */
+}
+.status-sent {
+    background-color: #198754; /* Verde: Enviado */
+}
