@@ -141,3 +141,47 @@ h2 {
 .status-sent {
     background-color: #198754; /* Verde: Enviado */
 }
+
+.bi-box-arrow-right {
+    rotate: 180deg;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.action-buttons button {
+    background-color: transparent;
+    border: none;
+    color: #4CAF50;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.edit-btn {
+    display: flex;
+    /* align-items: center; */
+    /* justify-content: center; */
+}
+
+.icon-edit {
+    width: 24px;
+}
+
+.logout-button, .back-button {
+    width: 50px;
+    height: 50px;
+    background-color: #8bc34a;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    transition: background-color 0.3s;
+}
+.logout-button:hover, .back-button:hover {
+    background-color: #7cb342;
+}

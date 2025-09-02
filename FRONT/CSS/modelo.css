@@ -12,8 +12,8 @@ body {
 }
 .header-icons {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    /* top: 20px;
+    right: 20px; */
 }
 .logout-button, .back-button {
     width: 50px;
@@ -92,8 +92,8 @@ body {
     border-bottom: 1px dashed #4CAF50;
 }
 
-.icon-edit {
-    width: 24px;
+.logout-button img {
+    height: 5px;
 }
 
 .edit-btn {
