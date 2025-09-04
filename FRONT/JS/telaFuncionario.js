@@ -1,50 +1,56 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Seleciona todos os botões com a classe .btn-edit-save
+    const editButtons = document.querySelectorAll('.btn-edit-save');
 
-    // Requisito: Sair do sistema
-    const logoutButton = document.getElementById('logoutBtn');
-    logoutButton.addEventListener('click', function() {
-        alert('Você saiu do sistema. Redirecionando para a tela de login.');
-        window.location.href = 'login.html'; 
-    });
-
-    // Requisito: Editar e Salvar Campo (apenas para o Retorno)
-    document.querySelectorAll('.edit-btn').forEach(button => {
+    // Adiciona um evento de clique para cada botão
+    editButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const fieldId = this.getAttribute('data-field-id');
-            const spanElement = document.getElementById(fieldId + '-value');
-            const isEditing = spanElement.querySelector('input');
+            // Encontra a linha (tr) e a célula (td) onde o botão está
+            const row = this.closest('tr');
+            const editableCell = row.querySelector('.editable-cell');
+            const textSpan = editableCell.querySelector('.cell-text');
+            const inputField = editableCell.querySelector('.cell-input');
             const icon = this.querySelector('i');
-            
-            if (!isEditing) {
-                // Modo de Edição
-                const currentValue = spanElement.textContent;
-                const inputElement = document.createElement('input');
-                inputElement.type = 'text';
-                inputElement.value = currentValue;
-                inputElement.classList.add('editable-field');
-                spanElement.innerHTML = '';
-                spanElement.appendChild(inputElement);
-                inputElement.focus();
-                icon.classList.remove('bi-pencil-square');
-                icon.classList.add('bi-floppy'); // Muda o ícone para Salvar
-                this.title = 'Salvar'; // Muda o título do botão
-            } else {
-                // Modo de Salvar
-                const newValue = isEditing.value;
-                
-                if (newValue.trim() === '') {
-                    alert('O campo não pode ser vazio!');
-                    isEditing.focus();
-                    return;
-                }
 
-                spanElement.textContent = newValue;
-                icon.classList.remove('bi-floppy');
-                icon.classList.add('bi-pencil-square');
-                this.title = 'Editar Retorno';
+            // Verifica se a linha está no modo de edição
+            const isEditing = row.classList.contains('editing');
+
+            if (isEditing) {
+                // --- MODO SALVAR ---
+                // 1. Pega o novo valor do input
+                const newValue = inputField.value;
+
+                // 2. Atualiza o texto do span
+                textSpan.textContent = newValue;
                 
-                console.log(`Dados salvos para o campo ${fieldId}: ${newValue}`);
-                alert(`Alterações salvas com sucesso para o campo Retorno!`);
+                // --- Em uma aplicação real, aqui você enviaria 'newValue' para o backend/banco de dados ---
+                console.log('Salvando dados:', newValue);
+                alert('Dados salvos com sucesso!');
+                // --- Fim da chamada ao backend ---
+
+                // 3. Alterna a visibilidade dos elementos
+                inputField.style.display = 'none';
+                textSpan.style.display = 'inline';
+
+                // 4. Muda o ícone de volta para "editar" (upload)
+                icon.classList.remove('bi-check-lg');
+                icon.classList.add('bi-upload');
+
+                // 5. Remove a classe de controle 'editing'
+                row.classList.remove('editing');
+            } else {
+                // --- MODO EDITAR ---
+                // 1. Alterna a visibilidade
+                textSpan.style.display = 'none';
+                inputField.style.display = 'block';
+                inputField.focus(); // Foca no campo para digitação imediata
+
+                // 2. Muda o ícone para "salvar" (check)
+                icon.classList.remove('bi-upload');
+                icon.classList.add('bi-check-lg');
+
+                // 3. Adiciona uma classe para sabermos que estamos em modo de edição
+                row.classList.add('editing');
             }
         });
     });

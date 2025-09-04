@@ -1,110 +1,102 @@
+/* --- Estilos Gerais (Pode já existir, apenas garanta que o fundo é branco) --- */
 body {
-    background-color: #e0e0e0;
+    background-color: #FFFFFF; /* Fundo branco */
+}
+
+/* --- Novos Estilos da Página de Histórico --- */
+.page-historico .main-header {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    padding: 20px;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 2rem 3rem;
 }
-.container-fluid {
-    max-width: 900px;
+
+.page-historico .logo-container img {
+    width: 100px; /* Logo maior */
+    height: auto;
 }
-.header-icons {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-}
-.logout-button, .back-button {
+
+.page-historico .btn-return {
+    background-color: #92B12D;
+    color: white;
     width: 50px;
     height: 50px;
-    background-color: #8bc34a;
-    border: none;
     border-radius: 50%;
     display: flex;
-    justify-content: center;
     align-items: center;
-    color: white;
+    justify-content: center;
     font-size: 1.5rem;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-    transition: background-color 0.3s;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    flex-shrink: 0; /* Impede que o botão encolha */
 }
-.logout-button:hover, .back-button:hover {
-    background-color: #7cb342;
+
+.page-historico .btn-return:hover {
+    background-color: #7c9426;
+    color: white;
 }
-.logoIcon {
-    width: 100px;
-    height: 100px;
-    margin-bottom: 20px;
-}
-.card-historico {
-    background-color: #b3e5a3;
-    border: 2px solid #8bc34a;
-    border-radius: 10px;
+
+.page-historico .history-container {
+    background-color: #e9eadb; /* Cor de fundo do container da tabela */
+    border: 1px solid #c5c7b8;
+    border-radius: 8px;
     padding: 20px;
-    width: 100%;
-    margin-top: 20px;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
 }
-.card-historico .card-title {
-    color: #4CAF50;
-    font-weight: bold;
+
+.page-historico .history-title {
+    background-color: #d1d3b9; /* Cor de fundo do título */
+    border: 1px solid #c5c7b8;
+    border-bottom: 1px solid #c5c7b8;
+    border-radius: 4px;
+    padding: 10px;
     text-align: center;
-    margin-bottom: 20px;
+    font-weight: bold;
+    color: #5b5b5b;
+    margin: -20px -20px 20px -20px; /* Alinha com o container pai */
+    font-size: 1.5rem;
 }
-.table-responsive {
-    margin-top: 10px;
+
+.page-historico .history-table {
+    border-color: #c5c7b8;
 }
-.table th, .table td {
-    border: none;
+
+.page-historico .history-table thead {
+    background-color: #f7f7f3; /* Fundo do cabeçalho da tabela */
+}
+
+.page-historico .history-table th {
+    color: #333;
+    font-weight: bold;
+    border-color: #c5c7b8;
+    font-size: 0.9rem;
     vertical-align: middle;
-    color: #4CAF50;
-    font-weight: bold;
 }
-.table thead th {
-    text-align: center;
-    border-bottom: 2px solid #8bc34a;
+
+.page-historico .history-table td {
+    background-color: #FFFFFF; /* Fundo das células de dados */
+    color: #4a4d31;
+    vertical-align: middle;
+    border-color: #c5c7b8;
 }
-.table tbody tr {
-    border-bottom: 1px solid #c5e1a5;
-}
-.table-custom-row td {
-    padding-top: 15px;
-    padding-bottom: 15px;
-}
-.action-buttons button {
-    background-color: transparent;
+
+.page-historico .btn-edit-save {
+    background: none;
     border: none;
-    color: #4CAF50;
-    font-size: 1.25rem;
+    color: #4f7a28;
+    font-size: 1.5rem;
     cursor: pointer;
-    padding: 5px;
-}
-.editable-field {
-    border: none;
-    background-color: transparent;
-    font-weight: bold;
-    color: #4CAF50;
-    width: 100%;
-    padding: 0;
-}
-.editable-field:focus {
-    outline: none;
-    border-bottom: 1px dashed #4CAF50;
 }
 
-.icon-edit {
-    width: 24px;
+/* Estilo para o campo de input quando estiver editando */
+.page-historico .editable-cell .cell-input {
+    background-color: #f0f1e3;
+    border-color: #aeb288;
 }
 
-.edit-btn {
-    display: flex;
-    /* align-items: center; */
-    /* justify-content: center; */
-}
-
-.bi-box-arrow-right {
-    rotate: 180deg;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.page-historico .editable-cell .cell-input:focus {
+    background-color: #f0f1e3;
+    border-color: #7c9426;
+    box-shadow: 0 0 0 0.25rem rgba(146, 177, 45, 0.25);
 }

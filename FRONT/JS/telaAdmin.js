@@ -1,206 +1,117 @@
-document.addEventListener('DOMContentLoaded', () => {
+// Aguarda o DOM ser completamente carregado
+document.addEventListener('DOMContentLoaded', function() {
 
-    // --- SIMULAÇÃO DE BANCO DE DADOS ---
-    let usuarios = [
-        { id: 1, nome: 'Fulano da Silva', setor: 'TI', cargo: 'Gestor', cpf: '111.111.111-11', status: 'ativo' },
-        { id: 2, nome: 'Ciclana de Souza', setor: 'RH', cargo: 'Analista', cpf: '222.222.222-22', status: 'ativo' },
-    ];
+    // --- LÓGICA DA PÁGINA DE ADMINISTRAÇÃO (admin.html) ---
 
-    let times = [
-        { id: 101, nome: 'Time Alpha', gestorId: 1, status: 'ativo' }
-    ];
+    const formCadUsuario = document.getElementById('form-cad-usuario');
+    const formCadTime = document.getElementById('form-cad-time');
+    const tableUsuarios = document.getElementById('table-usuarios')?.querySelector('tbody');
+    const tableTimes = document.getElementById('table-times')?.querySelector('tbody');
 
-    // --- SELETORES DE ELEMENTOS ---
-    const formUsuario = document.getElementById('form-usuario');
-    const formTime = document.getElementById('form-time');
-    const tabelaUsuariosBody = document.getElementById('tabela-usuarios-body');
-    const tabelaTimesBody = document.getElementById('tabela-times-body');
-    const gestorSelect = document.getElementById('time-gestor');
-    
-    // --- MODAL ---
-    const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-    const formEditUsuario = document.getElementById('form-edit-usuario');
+    // Requisito 8: Cadastrar Usuário
+    if (formCadUsuario) {
+        formCadUsuario.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const nome = document.getElementById('usuario-nome').value;
+            const setor = document.getElementById('usuario-setor').value;
+            const cargo = document.getElementById('usuario-cargo').value;
+            const cpf = document.getElementById('usuario-cpf').value;
 
-    // --- FUNÇÕES AUXILIARES ---
-    const mascararCPF = (cpf) => `***.${cpf.substring(4, 7)}.${cpf.substring(8, 11)}-**`;
-
-    // --- FUNÇÕES DE RENDERIZAÇÃO ---
-
-    function renderizarTabelaUsuarios() {
-        tabelaUsuariosBody.innerHTML = '';
-        usuarios.forEach(user => {
-            const isAtivo = user.status === 'ativo';
-            const statusIcon = isAtivo ? 'fa-lock-open' : 'fa-lock';
-            const statusTitle = isAtivo ? 'Ativo (clique para inativar)' : 'Inativo (clique para reativar)';
-
-            const linha = `
-                <tr>
-                    <td>${user.nome}</td>
-                    <td>${user.setor}</td>
-                    <td>${user.cargo}</td>
-                    <td class="text-center">
-                        <i class="fas ${statusIcon} action-icon" data-id="${user.id}" data-action="toggle-status" title="${statusTitle}"></i>
-                    </td>
-                    <td>${mascararCPF(user.cpf)}</td>
-                    <td class="text-center">
-                        <i class="fas fa-plus-square action-icon icon-edit" data-id="${user.id}" data-action="edit-user" title="Editar Usuário"></i>
-                    </td>
-                </tr>
+            // Simula adição à tabela
+            const newRow = tableUsuarios.insertRow();
+            newRow.innerHTML = `
+                <td>${nome}</td>
+                <td>${setor}</td>
+                <td>${cargo}</td>
+                <td class="text-center">
+                    <button class="btn-icon btn-status" data-status="ativo" aria-label="Inativar">
+                        <i class="bi bi-unlock-fill"></i>
+                    </button>
+                </td>
+                <td>******</td>
+                <td class="text-center">
+                    <button class="btn-icon btn-edit-user" aria-label="Editar">
+                        <i class="bi bi-plus-square-fill"></i>
+                    </button>
+                </td>
             `;
-            tabelaUsuariosBody.innerHTML += linha;
+            alert('Usuário cadastrado com sucesso!');
+            this.reset();
+            addEventListenersToTableButtons(); // Reatribui eventos aos novos botões
         });
     }
 
-    function renderizarTabelaTimes() {
-        tabelaTimesBody.innerHTML = '';
-        times.forEach(time => {
-            const gestor = usuarios.find(u => u.id === time.gestorId);
-            const isAtivo = time.status === 'ativo';
-            const statusIcon = isAtivo ? 'fa-lock-open' : 'fa-lock';
-            const statusTitle = isAtivo ? 'Ativo (clique para inativar)' : 'Inativo (clique para reativar)';
+    // Requisito 9: Cadastrar Time
+    if (formCadTime) {
+        formCadTime.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const nome = document.getElementById('time-nome').value;
+            const gestor = document.getElementById('time-gestor').value;
 
-            const linha = `
-                <tr>
-                    <td>${time.nome}</td>
-                    <td>${gestor ? gestor.nome : 'N/A'}</td>
-                    <td class="text-center">
-                        <i class="fas ${statusIcon} action-icon" data-id="${time.id}" data-action="toggle-status" title="${statusTitle}"></i>
-                    </td>
-                    <td class="text-center">
-                        <i class="fas fa-plus-square action-icon icon-edit" data-id="${time.id}" data-action="edit-time" title="Editar Time (não implementado)"></i>
-                    </td>
-                </tr>
+            // Simula adição à tabela
+            const newRow = tableTimes.insertRow();
+            newRow.innerHTML = `
+                <td>${nome}</td>
+                <td>${gestor}</td>
+                <td class="text-center">
+                    <button class="btn-icon btn-status" data-status="ativo" aria-label="Inativar">
+                        <i class="bi bi-unlock-fill"></i>
+                    </button>
+                </td>
+                <td class="text-center">
+                    <button class="btn-icon btn-edit-time" aria-label="Editar">
+                        <i class="bi bi-plus-square-fill"></i>
+                    </button>
+                </td>
             `;
-            tabelaTimesBody.innerHTML += linha;
+            alert('Time cadastrado com sucesso!');
+            this.reset();
+            addEventListenersToTableButtons(); // Reatribui eventos aos novos botões
         });
     }
 
-    function popularGestores() {
-        // Guarda a opção "Selecione"
-        const placeholder = gestorSelect.options[0];
-        gestorSelect.innerHTML = '';
-        gestorSelect.appendChild(placeholder); // Adiciona de volta
+    // Requisitos 10 e 11: Funções de Editar e Mudar Status
+    function handleStatusClick(e) {
+        const button = e.currentTarget;
+        const icon = button.querySelector('i');
+        const currentStatus = button.getAttribute('data-status');
 
-        const gestores = usuarios.filter(u => u.status === 'ativo'); // Apenas usuários ativos podem ser gestores
-        gestores.forEach(g => {
-            const option = document.createElement('option');
-            option.value = g.id;
-            option.textContent = g.nome;
-            gestorSelect.appendChild(option);
-        });
+        if (currentStatus === 'ativo') {
+            button.setAttribute('data-status', 'inativo');
+            button.setAttribute('aria-label', 'Reativar');
+            icon.classList.remove('bi-unlock-fill');
+            icon.classList.add('bi-lock-fill');
+            alert('Item inativado.');
+        } else {
+            button.setAttribute('data-status', 'ativo');
+            button.setAttribute('aria-label', 'Inativar');
+            icon.classList.remove('bi-lock-fill');
+            icon.classList.add('bi-unlock-fill');
+            alert('Item reativado.');
+        }
     }
 
-    // --- LÓGICA DE CADASTRO ---
+    function handleEditUserClick(e) {
+        const row = e.currentTarget.closest('tr');
+        const nome = row.cells[0].textContent;
+        alert(`Simulando edição do usuário: ${nome}. \nEm um app real, abriria um pop-up ou levaria a outra página.`);
+    }
 
-    formUsuario.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const nome = document.getElementById('user-nome').value.trim();
-        const setor = document.getElementById('user-setor').value.trim();
-        const cargo = document.getElementById('user-cargo').value.trim();
-        const cpf = document.getElementById('user-cpf').value.trim();
+    function handleEditTimeClick(e) {
+        const row = e.currentTarget.closest('tr');
+        const nome = row.cells[0].textContent;
+        alert(`Simulando edição do time: ${nome}.`);
+    }
 
-        if (usuarios.some(u => u.cpf === cpf)) {
-            alert('Erro: CPF já cadastrado no sistema.');
-            return;
-        }
-
-        const novoUsuario = { id: Date.now(), nome, setor, cargo, cpf, status: 'ativo' };
-        usuarios.push(novoUsuario);
-
-        alert('Usuário cadastrado com sucesso!');
-        formUsuario.reset();
-        renderizarTabelaUsuarios();
-        popularGestores(); // Atualiza a lista de gestores
-    });
-
-    formTime.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const nome = document.getElementById('time-nome').value.trim();
-        const gestorId = parseInt(document.getElementById('time-gestor').value);
-
-        if (!nome || !gestorId) {
-            alert('Erro: Preencha todos os campos para cadastrar o time.');
-            return;
-        }
-
-        const novoTime = { id: Date.now(), nome, gestorId, status: 'ativo' };
-        times.push(novoTime);
-
-        alert('Time cadastrado com sucesso!');
-        formTime.reset();
-        renderizarTabelaTimes();
-    });
-
-    // --- LÓGICA DE AÇÕES NAS TABELAS (EDIÇÃO E STATUS) ---
-
-    tabelaUsuariosBody.addEventListener('click', (e) => {
-        const target = e.target;
-        const action = target.dataset.action;
-        const id = parseInt(target.dataset.id);
-
-        if (action === 'toggle-status') {
-            const user = usuarios.find(u => u.id === id);
-            user.status = user.status === 'ativo' ? 'inativo' : 'ativo';
-            renderizarTabelaUsuarios();
-            popularGestores(); // Status do gestor pode ter mudado
-        }
-
-        if (action === 'edit-user') {
-            const user = usuarios.find(u => u.id === id);
-            document.getElementById('edit-user-id').value = user.id;
-            document.getElementById('edit-user-nome').value = user.nome;
-            document.getElementById('edit-user-setor').value = user.setor;
-            document.getElementById('edit-user-cargo').value = user.cargo;
-            document.getElementById('edit-user-cpf').value = user.cpf;
-            editUserModal.show();
-        }
-    });
+    // Função para adicionar eventos aos botões das tabelas
+    function addEventListenersToTableButtons() {
+        document.querySelectorAll('.btn-status').forEach(btn => btn.addEventListener('click', handleStatusClick));
+        document.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', handleEditUserClick));
+        document.querySelectorAll('.btn-edit-time').forEach(btn => btn.addEventListener('click', handleEditTimeClick));
+    }
     
-    tabelaTimesBody.addEventListener('click', (e) => {
-        const target = e.target;
-        const action = target.dataset.action;
-        const id = parseInt(target.dataset.id);
+    // Adiciona os eventos quando a página carrega pela primeira vez
+    addEventListenersToTableButtons();
 
-        if (action === 'toggle-status') {
-            const time = times.find(t => t.id === id);
-            time.status = time.status === 'ativo' ? 'inativo' : 'ativo';
-            renderizarTabelaTimes();
-        }
-        
-        if (action === 'edit-time') {
-            // A lógica de edição de time seria similar à de usuário (com um modal próprio)
-            alert('Funcionalidade "Editar Time" a ser implementada.');
-        }
-    });
-
-    // --- LÓGICA DE ATUALIZAÇÃO (MODAL) ---
-    formEditUsuario.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const id = parseInt(document.getElementById('edit-user-id').value);
-        const nome = document.getElementById('edit-user-nome').value.trim();
-        const setor = document.getElementById('edit-user-setor').value.trim();
-        const cargo = document.getElementById('edit-user-cargo').value.trim();
-        
-        const userIndex = usuarios.findIndex(u => u.id === id);
-        if(userIndex > -1) {
-            usuarios[userIndex].nome = nome;
-            usuarios[userIndex].setor = setor;
-            usuarios[userIndex].cargo = cargo;
-        }
-        
-        alert('Usuário atualizado com sucesso!');
-        editUserModal.hide();
-        renderizarTabelaUsuarios();
-        popularGestores();
-    });
-
-
-    // --- INICIALIZAÇÃO ---
-    function init() {
-        renderizarTabelaUsuarios();
-        renderizarTabelaTimes();
-        popularGestores();
-    }
-
-    init();
-}); 
+    // ... (manter o código JS das outras páginas, se estiver no mesmo arquivo)
+});

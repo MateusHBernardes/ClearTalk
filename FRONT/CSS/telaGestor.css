@@ -1,187 +1,129 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+/* --- Estilos da Página do Gestor --- */
 
-:root {
-    --color-background: #f0f0f0;
-    --color-form-bg: #cce7e8; /* Azul claro do formulário */
-    --color-history-bg: #e3eec1; /* Verde claro do histórico */
-    --color-input-bg: #d9e6a1; /* Verde dos inputs e header da tabela */
-    --color-button: #93b32b; /* Verde escuro dos botões */
-    --color-button-hover: #7b9623;
-    --color-text: #333;
+.page-gestor {
+    background-color: #E6E6E6; /* Fundo cinza claro */
 }
 
-body {
-    font-family: 'Roboto', sans-serif;
-    background-color: var(--color-background);
-    color: var(--color-text);
+.page-gestor .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
 }
 
-header .logo i {
-    color: var(--color-button);
+.page-gestor .header-logo {
+    width: 60px; /* Logo menor e centralizada */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 20px;
 }
 
-.btn-logout {
-    background-color: var(--color-button);
+.page-gestor .btn-return {
+    background-color: #92B12D;
     color: white;
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
-    border: none;
-    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    margin-left: auto; /* Alinha o botão à direita */
 }
 
-.btn-logout:hover {
-    background-color: var(--color-button-hover);
+.page-gestor .btn-return:hover {
+    background-color: #7c9426;
     color: white;
 }
 
-.form-container {
-    background-color: var(--color-form-bg);
+/* Container do Formulário de Feedback */
+.page-gestor .form-container {
+    background-color: #BEE1E6; /* Fundo azul claro */
+    border-radius: 8px;
+    padding: 30px;
+    max-width: 900px;
+    margin: 20px auto;
 }
 
-.history-container {
-    background-color: var(--color-history-bg);
-}
-
-.form-label {
+.page-gestor .form-container .form-label {
     font-weight: bold;
-    font-size: 0.9rem;
+    color: #333;
+    margin-bottom: .5rem;
 }
 
-.form-control, .form-select {
-    background-color: var(--color-input-bg);
-    border: none;
-    border-radius: 5px;
+.page-gestor .form-container .form-control {
+    background-color: #D4D8AD; /* Fundo dos inputs verde claro */
+    border: 1px solid #aeb288;
 }
 
-.form-control:focus, .form-select:focus {
-    background-color: var(--color-input-bg);
-    box-shadow: 0 0 0 0.25rem rgba(147, 179, 43, 0.25);
-    border: none;
+.page-gestor .form-container .form-control:read-only {
+    background-color: #e9eacb;
 }
 
-.form-control[readonly] {
-    opacity: 0.7;
-}
-
-.btn-custom-save {
-    background-color: var(--color-button);
-    color: white;
+.page-gestor .btn-salvar {
+    background-color: #92B12D;
+    color: #FFF;
     font-weight: bold;
     padding: 10px 40px;
-    border: none;
+    border: 1px solid #7c9426;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.page-gestor .btn-salvar:hover {
+    background-color: #7c9426;
+}
+
+/* Container do Histórico */
+.page-gestor .history-container-gestor {
+    background-color: #D4D8AD;
+    border: 2px solid #aeb288;
     border-radius: 8px;
-    transition: background-color 0.3s;
+    padding: 20px;
+    max-width: 900px;
+    margin: 40px auto;
 }
 
-.btn-custom-save:hover {
-    background-color: var(--color-button-hover);
-    color: white;
-}
-
-h2 {
+.page-gestor .history-container-gestor .history-title {
+    background-color: #c4c89c;
+    border: 2px solid #aeb288;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    padding: 10px;
+    text-align: center;
     font-weight: bold;
-}
-
-.table {
-    background-color: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.table thead {
-    background-color: var(--color-input-bg);
-}
-
-.table th {
-    font-weight: bold;
-    border: none;
-}
-
-.table td {
-    vertical-align: middle;
-    border-top: 1px solid #ddd;
-}
-
-.action-icon {
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-.icon-edit {
-    color: #0d6efd;
-}
-.icon-edit:hover {
-    color: #0a58ca;
-}
-
-.icon-send {
-    color: #198754;
-}
-.icon-send:hover {
-    color: #146c43;
-}
-.icon-send.sent {
-    color: #6c757d; /* Cinza para quando já foi enviado */
-    cursor: not-allowed;
-}
-
-/* Indicador de status visual */
-.status-indicator {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    margin-right: 5px;
-}
-.status-saved {
-    background-color: #ffc107; /* Amarelo: Salvo */
-}
-.status-sent {
-    background-color: #198754; /* Verde: Enviado */
-}
-
-.bi-box-arrow-right {
-    rotate: 180deg;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.action-buttons button {
-    background-color: transparent;
-    border: none;
-    color: #4CAF50;
-    font-size: 1.25rem;
-    cursor: pointer;
-    padding: 5px;
-}
-
-.edit-btn {
-    display: flex;
-    /* align-items: center; */
-    /* justify-content: center; */
-}
-
-.icon-edit {
-    width: 24px;
-}
-
-.logout-button, .back-button {
-    width: 50px;
-    height: 50px;
-    background-color: #8bc34a;
-    border: none;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
+    color: #555938;
+    margin: -20px -20px 20px -20px;
     font-size: 1.5rem;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-    transition: background-color 0.3s;
 }
-.logout-button:hover, .back-button:hover {
-    background-color: #7cb342;
+
+.page-gestor .history-container-gestor .table {
+    border-color: #aeb288;
 }
+
+.page-gestor .history-container-gestor th {
+    background-color: #f7f7f3;
+}
+
+.page-gestor .history-container-gestor td,
+.page-gestor .history-container-gestor th {
+    vertical-align: middle;
+    text-align: center;
+}
+
+/* Ícones da tabela */
+.page-gestor .btn-icon {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.page-gestor .icon-check { color: #28a745; }
+.page-gestor .icon-circle { color: #6c757d; }
+.page-gestor .icon-plus { color: #007bff; }
+.page-gestor .bi-upload { color: #4f7a28; }

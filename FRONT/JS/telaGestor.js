@@ -1,218 +1,85 @@
-// Aguarda o carregamento completo do DOM para iniciar o script
-document.addEventListener('DOMContentLoaded', () => {
+// Aguarda o DOM ser completamente carregado
+document.addEventListener('DOMContentLoaded', function() {
 
-    // --- SIMULAÇÃO DE BANCO DE DADOS ---
-    // Em um projeto real, estes dados viriam de uma API/backend.
-
-    // Lista de funcionários cadastrados
-    const funcionarios = [
-        { id: 1, nome: 'Fulano da Silva', setor: 'TI' },
-        { id: 2, nome: 'Ciclana de Souza', setor: 'RH' },
-        { id: 3, nome: 'Beltrano Oliveira', setor: 'Marketing' }
-    ];
-
-    // Array para armazenar os feedbacks criados
-    let feedbacks = [
-        // Exemplo inicial para visualização
-        { 
-            id: 1, 
-            funcionarioId: 1, 
-            feedback: 'Excelente desempenho no projeto X.', 
-            pontosMelhorar: 'Nenhum ponto a ser destacado no momento.', 
-            data: '25/08/2025', 
-            status: 'salvo' // 'salvo' ou 'enviado'
-        }
-    ];
-
-    // --- SELETORES DE ELEMENTOS DO DOM ---
-    const form = document.getElementById('feedback-form');
-    const funcionarioSelect = document.getElementById('funcionario');
+    // --- LÓGICA DA PÁGINA DO GESTOR (gestor.html) ---
+    const funcionarioInput = document.getElementById('funcionario');
     const setorInput = document.getElementById('setor');
     const dataInput = document.getElementById('data');
-    const feedbackIdInput = document.getElementById('feedback-id');
-    const feedbackTextarea = document.getElementById('feedback');
-    const pontosMelhorarTextarea = document.getElementById('pontos-melhorar');
-    const historicoBody = document.getElementById('historico-body');
-    const btnSair = document.getElementById('btn-sair');
+    const feedbackForm = document.getElementById('feedback-form');
 
-    // --- FUNÇÕES PRINCIPAIS ---
+    // Simulação de banco de dados de funcionários
+    const funcionariosDB = {
+        "FULANO": "TI",
+        "CICRANO": "RH",
+        "BELTRANO": "FINANCEIRO"
+    };
 
-    /**
-     * Carrega os funcionários no campo <select> do formulário.
-     */
-    function popularFuncionarios() {
-        funcionarios.forEach(func => {
-            const option = document.createElement('option');
-            option.value = func.id;
-            option.textContent = func.nome;
-            funcionarioSelect.appendChild(option);
-        });
-    }
-
-    /**
-     * Formata uma data para o padrão DD/MM/AAAA.
-     * @param {Date} date - O objeto de data a ser formatado.
-     * @returns {string} - A data formatada.
-     */
-    function formatarData(date) {
-        const dia = String(date.getDate()).padStart(2, '0');
-        const mes = String(date.getMonth() + 1).padStart(2, '0');
-        const ano = date.getFullYear();
-        return `${dia}/${mes}/${ano}`;
-    }
-
-    /**
-     * Renderiza a tabela de histórico de feedbacks.
-     * Limpa a tabela existente e a recria com os dados do array 'feedbacks'.
-     */
-    function renderizarHistorico() {
-        historicoBody.innerHTML = ''; // Limpa a tabela
-
-        if (feedbacks.length === 0) {
-            historicoBody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum feedback cadastrado.</td></tr>';
-            return;
-        }
-
-        feedbacks.forEach(fb => {
-            const funcionario = funcionarios.find(f => f.id === fb.funcionarioId);
-            const linha = document.createElement('tr');
+    // Requisito 4: Preenchimento automático de Setor e Data
+    if (funcionarioInput) {
+        funcionarioInput.addEventListener('blur', function() { // Evento 'blur' ocorre quando o campo perde o foco
+            const nomeFuncionario = this.value.toUpperCase(); // Padroniza para maiúsculas
             
-            const isSent = fb.status === 'enviado';
-            const sendIconClass = isSent ? 'fa-solid fa-check-circle sent' : 'fa-solid fa-paper-plane';
-            const sendTitle = isSent ? 'Feedback já enviado' : 'Enviar para o funcionário';
+            if (funcionariosDB[nomeFuncionario]) {
+                // Preenche o setor
+                setorInput.value = funcionariosDB[nomeFuncionario];
+                
+                // Preenche a data atual
+                const hoje = new Date();
+                const dia = String(hoje.getDate()).padStart(2, '0');
+                const mes = String(hoje.getMonth() + 1).padStart(2, '0'); // Mês começa do 0
+                const ano = hoje.getFullYear();
+                dataInput.value = `${dia}/${mes}/${ano}`;
 
-            linha.innerHTML = `
-                <td>
-                    <span class="status-indicator ${isSent ? 'status-sent' : 'status-saved'}" title="${isSent ? 'Enviado' : 'Salvo'}"></span>
-                    ${funcionario.nome}
-                </td>
-                <td>${funcionario.setor}</td>
-                <td>${fb.feedback.substring(0, 30)}...</td>
-                <td>${fb.pontosMelhorar.substring(0, 30)}...</td>
-                <td class="text-center">
-                    <i class="fas fa-edit action-icon icon-edit" data-id="${fb.id}" title="Editar Feedback"></i>
-                </td>
-                <td class="text-center">
-                    <i class="${sendIconClass} action-icon icon-send" data-id="${fb.id}" title="${sendTitle}"></i>
-                </td>
-            `;
-            historicoBody.appendChild(linha);
+            } else {
+                // Limpa os campos se o funcionário não for encontrado
+                setorInput.value = '';
+                dataInput.value = '';
+                if(this.value !== '') {
+                   alert('Funcionário não encontrado no sistema.');
+                }
+            }
         });
     }
 
-    /**
-     * Limpa os campos do formulário e redefine para o modo de criação.
-     */
-    function limparFormulario() {
-        form.reset(); // Limpa todos os campos
-        setorInput.value = '';
-        dataInput.value = '';
-        feedbackIdInput.value = ''; // Garante que estamos no modo de criação
-    }
-    
-    // --- EVENT LISTENERS (OUVINTES DE EVENTOS) ---
-
-    // REQUISITO: Sair do sistema
-    btnSair.addEventListener('click', () => {
-        alert('Funcionalidade de "Sair" acionada. Redirecionando para a tela de login...');
-        // Em uma aplicação real, aqui você redirecionaria o usuário
-        // window.location.href = '/login.html'; 
-    });
-
-    // REQUISITO: Criar Feedback (Preenchimento automático)
-    funcionarioSelect.addEventListener('change', (e) => {
-        const funcionarioId = e.target.value;
-        if (funcionarioId) {
-            const funcionario = funcionarios.find(f => f.id == funcionarioId);
-            setorInput.value = funcionario.setor;
-            dataInput.value = formatarData(new Date());
-        } else {
-            setorInput.value = '';
-            dataInput.value = '';
-        }
-    });
-
-    // REQUISITO: Criar e Editar Feedback (Salvar)
-    form.addEventListener('submit', (e) => {
-        e.preventDefault(); // Impede o recarregamento da página
-
-        const id = feedbackIdInput.value;
-        const funcionarioId = parseInt(funcionarioSelect.value);
-        const feedback = feedbackTextarea.value.trim();
-        const pontosMelhorar = pontosMelhorarTextarea.value.trim();
-        const data = dataInput.value;
-
-        // Validação dos campos
-        if (!funcionarioId || !feedback || !pontosMelhorar) {
-            alert('Por favor, preencha todos os campos obrigatórios.');
-            return;
-        }
-
-        if (id) { // --- MODO EDIÇÃO ---
-            const index = feedbacks.findIndex(fb => fb.id == id);
-            if (index !== -1) {
-                feedbacks[index] = { ...feedbacks[index], funcionarioId, feedback, pontosMelhorar, data };
-                alert('Feedback atualizado com sucesso!');
-            }
-        } else { // --- MODO CRIAÇÃO ---
-            const novoFeedback = {
-                id: Date.now(), // ID único baseado no timestamp
-                funcionarioId,
-                feedback,
-                pontosMelhorar,
-                data,
-                status: 'salvo' // Status inicial
-            };
-            feedbacks.push(novoFeedback);
-            alert('Feedback salvo com sucesso no histórico!');
-        }
-
-        limparFormulario();
-        renderizarHistorico();
-    });
-
-    // REQUISITOS: Editar e Enviar Feedback (Ações do Histórico)
-    historicoBody.addEventListener('click', (e) => {
-        const target = e.target;
-        const id = target.dataset.id;
-        
-        if (!id) return;
-
-        // Ação de EDITAR
-        if (target.classList.contains('fa-edit')) {
-            const feedbackParaEditar = feedbacks.find(fb => fb.id == id);
-            if(feedbackParaEditar.status === 'enviado'){
-                alert('Não é possível editar um feedback que já foi enviado.');
+    // Requisito 4: Salvar Feedback
+    if (feedbackForm) {
+        feedbackForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+            
+            // Validação simples dos campos obrigatórios
+            if (funcionarioInput.value === '' || setorInput.value === '' || document.getElementById('feedback').value === '' || document.getElementById('pontos-melhorar').value === '') {
+                alert('Por favor, preencha todos os campos obrigatórios.');
                 return;
             }
 
-            // Preenche o formulário com os dados para edição
-            feedbackIdInput.value = feedbackParaEditar.id;
-            funcionarioSelect.value = feedbackParaEditar.funcionarioId;
-            feedbackTextarea.value = feedbackParaEditar.feedback;
-            pontosMelhorarTextarea.value = feedbackParaEditar.pontosMelhorar;
-            // Dispara o evento 'change' para atualizar setor e data
-            funcionarioSelect.dispatchEvent(new Event('change')); 
+            // Simula o salvamento e adiciona ao histórico
+            alert('Feedback salvo com sucesso no histórico!');
+            // Aqui você adicionaria a lógica para de fato criar uma nova linha na tabela de histórico
             
-            window.scrollTo(0, 0); // Rola a página para o topo para ver o formulário
-        }
-
-        // Ação de ENVIAR
-        if (target.classList.contains('fa-paper-plane') && !target.classList.contains('sent')) {
-            const index = feedbacks.findIndex(fb => fb.id == id);
-            if (index !== -1) {
-                feedbacks[index].status = 'enviado';
-                alert(`Feedback para ${funcionarios.find(f => f.id === feedbacks[index].funcionarioId).nome} enviado com sucesso!`);
-                renderizarHistorico(); // Re-renderiza para atualizar o ícone
-            }
-        }
-    });
-
-    // --- INICIALIZAÇÃO DA PÁGINA ---
-    function init() {
-        popularFuncionarios();
-        renderizarHistorico();
+            feedbackForm.reset(); // Limpa o formulário
+        });
     }
 
-    init(); // Chama a função inicial
+    // Requisito 7: Enviar Feedback
+    // Seleciona todos os botões de envio na página
+    const sendButtons = document.querySelectorAll('.btn-enviar');
+    sendButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Lógica para enviar o feedback
+            // Em uma aplicação real, isso mudaria um status no banco de dados e notificaria o usuário.
+            const row = this.closest('tr');
+            const nome = row.cells[0].textContent;
+            
+            if(confirm(`Tem certeza que deseja enviar o feedback para ${nome}?`)) {
+                alert(`Feedback enviado para ${nome} com sucesso!`);
+                // Poderia desabilitar o botão ou mudar o ícone após o envio
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-check-lg"></i>';
+            }
+        });
+    });
+
+    // A lógica de edição (Requisito 6) pode ser adicionada de forma similar,
+    // tornando as células da tabela editáveis ou abrindo um modal com os dados.
+
 });
