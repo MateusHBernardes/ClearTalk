@@ -1,117 +1,90 @@
-// Aguarda o DOM ser completamente carregado
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
+    const userForm = document.getElementById('userForm');
+    const teamForm = document.getElementById('teamForm');
+    const usersTableBody = document.getElementById('usersTableBody');
+    const teamsTableBody = document.getElementById('teamsTableBody');
 
-    // --- LÓGICA DA PÁGINA DE ADMINISTRAÇÃO (admin.html) ---
+    // --- LÓGICA PARA USUÁRIOS ---
 
-    const formCadUsuario = document.getElementById('form-cad-usuario');
-    const formCadTime = document.getElementById('form-cad-time');
-    const tableUsuarios = document.getElementById('table-usuarios')?.querySelector('tbody');
-    const tableTimes = document.getElementById('table-times')?.querySelector('tbody');
+    // Salvar (Criar ou Editar) Usuário
+    userForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // Simulação de salvamento
+        alert('Usuário salvo com sucesso!');
+        userForm.reset();
+    });
 
-    // Requisito 8: Cadastrar Usuário
-    if (formCadUsuario) {
-        formCadUsuario.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const nome = document.getElementById('usuario-nome').value;
-            const setor = document.getElementById('usuario-setor').value;
-            const cargo = document.getElementById('usuario-cargo').value;
-            const cpf = document.getElementById('usuario-cpf').value;
+    // Ações na Tabela de Usuários (Editar e Status)
+    usersTableBody.addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+        if (!button) return;
 
-            // Simula adição à tabela
-            const newRow = tableUsuarios.insertRow();
-            newRow.innerHTML = `
-                <td>${nome}</td>
-                <td>${setor}</td>
-                <td>${cargo}</td>
-                <td class="text-center">
-                    <button class="btn-icon btn-status" data-status="ativo" aria-label="Inativar">
-                        <i class="bi bi-unlock-fill"></i>
-                    </button>
-                </td>
-                <td>******</td>
-                <td class="text-center">
-                    <button class="btn-icon btn-edit-user" aria-label="Editar">
-                        <i class="bi bi-plus-square-fill"></i>
-                    </button>
-                </td>
-            `;
-            alert('Usuário cadastrado com sucesso!');
-            this.reset();
-            addEventListenersToTableButtons(); // Reatribui eventos aos novos botões
-        });
-    }
-
-    // Requisito 9: Cadastrar Time
-    if (formCadTime) {
-        formCadTime.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const nome = document.getElementById('time-nome').value;
-            const gestor = document.getElementById('time-gestor').value;
-
-            // Simula adição à tabela
-            const newRow = tableTimes.insertRow();
-            newRow.innerHTML = `
-                <td>${nome}</td>
-                <td>${gestor}</td>
-                <td class="text-center">
-                    <button class="btn-icon btn-status" data-status="ativo" aria-label="Inativar">
-                        <i class="bi bi-unlock-fill"></i>
-                    </button>
-                </td>
-                <td class="text-center">
-                    <button class="btn-icon btn-edit-time" aria-label="Editar">
-                        <i class="bi bi-plus-square-fill"></i>
-                    </button>
-                </td>
-            `;
-            alert('Time cadastrado com sucesso!');
-            this.reset();
-            addEventListenersToTableButtons(); // Reatribui eventos aos novos botões
-        });
-    }
-
-    // Requisitos 10 e 11: Funções de Editar e Mudar Status
-    function handleStatusClick(e) {
-        const button = e.currentTarget;
-        const icon = button.querySelector('i');
-        const currentStatus = button.getAttribute('data-status');
-
-        if (currentStatus === 'ativo') {
-            button.setAttribute('data-status', 'inativo');
-            button.setAttribute('aria-label', 'Reativar');
-            icon.classList.remove('bi-unlock-fill');
-            icon.classList.add('bi-lock-fill');
-            alert('Item inativado.');
-        } else {
-            button.setAttribute('data-status', 'ativo');
-            button.setAttribute('aria-label', 'Inativar');
-            icon.classList.remove('bi-lock-fill');
-            icon.classList.add('bi-unlock-fill');
-            alert('Item reativado.');
+        // Editar Usuário
+        if (button.classList.contains('edit-user-btn')) {
+            const row = button.closest('tr');
+            const nome = row.cells[0].textContent;
+            // Lógica para carregar os dados no formulário
+            document.getElementById('userName').value = nome;
+            document.getElementById('userSector').value = row.cells[1].textContent;
+            document.getElementById('userRole').value = row.cells[2].textContent;
+            document.getElementById('userCPF').value = "CPF Carregado"; // Evitar expor CPF real
+            
+            alert(`Dados de '${nome}' carregados para edição.`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-    }
 
-    function handleEditUserClick(e) {
-        const row = e.currentTarget.closest('tr');
-        const nome = row.cells[0].textContent;
-        alert(`Simulando edição do usuário: ${nome}. \nEm um app real, abriria um pop-up ou levaria a outra página.`);
-    }
+        // Mudar Status do Usuário
+        if (button.classList.contains('status-user-btn')) {
+            const icon = button.querySelector('i');
+            if (icon.classList.contains('bi-unlock-fill')) {
+                icon.classList.remove('bi-unlock-fill');
+                icon.classList.add('bi-lock-fill');
+                alert('Usuário inativado.');
+            } else {
+                icon.classList.remove('bi-lock-fill');
+                icon.classList.add('bi-unlock-fill');
+                alert('Usuário reativado.');
+            }
+        }
+    });
 
-    function handleEditTimeClick(e) {
-        const row = e.currentTarget.closest('tr');
-        const nome = row.cells[0].textContent;
-        alert(`Simulando edição do time: ${nome}.`);
-    }
+    // --- LÓGICA PARA TIMES ---
 
-    // Função para adicionar eventos aos botões das tabelas
-    function addEventListenersToTableButtons() {
-        document.querySelectorAll('.btn-status').forEach(btn => btn.addEventListener('click', handleStatusClick));
-        document.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', handleEditUserClick));
-        document.querySelectorAll('.btn-edit-time').forEach(btn => btn.addEventListener('click', handleEditTimeClick));
-    }
-    
-    // Adiciona os eventos quando a página carrega pela primeira vez
-    addEventListenersToTableButtons();
+    // Salvar (Criar ou Editar) Time
+    teamForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        alert('Time salvo com sucesso!');
+        teamForm.reset();
+    });
 
-    // ... (manter o código JS das outras páginas, se estiver no mesmo arquivo)
+    // Ações na Tabela de Times (Editar e Status)
+    teamsTableBody.addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+        if (!button) return;
+
+        // Editar Time
+        if (button.classList.contains('edit-team-btn')) {
+            const row = button.closest('tr');
+            const nome = row.cells[0].textContent;
+            document.getElementById('teamName').value = nome;
+            document.getElementById('teamManager').value = row.cells[1].textContent;
+            
+            alert(`Dados do time '${nome}' carregados para edição.`);
+             window.scrollTo({ top: document.getElementById('teamForm').offsetTop - 20, behavior: 'smooth' });
+        }
+
+        // Mudar Status do Time
+        if (button.classList.contains('status-team-btn')) {
+            const icon = button.querySelector('i');
+            if (icon.classList.contains('bi-unlock-fill')) {
+                icon.classList.remove('bi-unlock-fill');
+                icon.classList.add('bi-lock-fill');
+                alert('Time inativado.');
+            } else {
+                icon.classList.remove('bi-lock-fill');
+                icon.classList.add('bi-unlock-fill');
+                alert('Time reativado.');
+            }
+        }
+    });
 });

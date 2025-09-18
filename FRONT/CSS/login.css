@@ -1,0 +1,88 @@
+        /* --------------------
+         * Estilização Base
+         * -------------------- */
+         :root {
+            --cor-fundo: #e0e0e0;
+            --cor-input: #c7d3a8;
+            --cor-placeholder: #5d6645;
+            --cor-botao: #9fcb3a;
+            --cor-borda-botao: #88af2b;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--cor-fundo);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --------------------
+         * Container Principal
+         * -------------------- */
+        .login-container {
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        /* -------------------------------------
+         * Estilo para o container da logo
+         * ------------------------------------- */
+        .logo-wrapper {
+            margin-bottom: 40px; /* Apenas mantém o espaçamento inferior */
+        }
+        
+        .logo-wrapper img {
+            width: 80px; /* Ajuste a largura conforme necessário */
+            height: auto; /* Mantém a proporção da imagem */
+        }
+
+        /* --------------------
+         * Formulário (Inputs e Botão)
+         * -------------------- */
+        .form-control {
+            background-color: var(--cor-input);
+            border: none;
+            border-radius: 4px;
+            height: 50px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--cor-placeholder);
+            margin-bottom: 1.25rem;
+        }
+        
+        .form-control:focus {
+            background-color: var(--cor-input);
+            color: var(--cor-placeholder);
+            box-shadow: 0 0 0 0.25rem rgba(159, 203, 58, 0.25);
+            border: none;
+        }
+
+        .form-control::placeholder {
+            color: var(--cor-placeholder);
+            opacity: 1;
+        }
+
+        .btn-login {
+            background-color: var(--cor-botao);
+            border: 2px solid var(--cor-borda-botao);
+            color: var(--cor-placeholder);
+            font-weight: 600;
+            width: 100%;
+            padding: 10px 0;
+            margin-top: 10px;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .btn-login:hover {
+            background-color: var(--cor-borda-botao);
+            border-color: var(--cor-borda-botao);
+            color: white;
+        }

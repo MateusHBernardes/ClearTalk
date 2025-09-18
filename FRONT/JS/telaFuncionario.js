@@ -1,57 +1,48 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Seleciona todos os botões com a classe .btn-edit-save
-    const editButtons = document.querySelectorAll('.btn-edit-save');
+        // --- Lógica para o botão Editar/Salvar ---
 
-    // Adiciona um evento de clique para cada botão
-    editButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Encontra a linha (tr) e a célula (td) onde o botão está
-            const row = this.closest('tr');
-            const editableCell = row.querySelector('.editable-cell');
-            const textSpan = editableCell.querySelector('.cell-text');
-            const inputField = editableCell.querySelector('.cell-input');
-            const icon = this.querySelector('i');
+        // 1. Inicializa os tooltips do Bootstrap
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-            // Verifica se a linha está no modo de edição
-            const isEditing = row.classList.contains('editing');
+        // 2. Seleciona os elementos que vamos manipular
+        const editSaveBtn = document.getElementById('edit-save-btn');
+        const editableField = document.querySelector('.editable-field');
+        const btnIcon = editSaveBtn.querySelector('i');
+        const btnTooltip = bootstrap.Tooltip.getInstance(editSaveBtn);
 
-            if (isEditing) {
-                // --- MODO SALVAR ---
-                // 1. Pega o novo valor do input
-                const newValue = inputField.value;
+        // 3. Adiciona o evento de clique ao botão
+        editSaveBtn.addEventListener('click', () => {
+            const isReadOnly = editableField.hasAttribute('readonly');
 
-                // 2. Atualiza o texto do span
-                textSpan.textContent = newValue;
+            if (isReadOnly) {
+                // MODO EDIÇÃO: Se o campo está bloqueado, libera para editar
                 
-                // --- Em uma aplicação real, aqui você enviaria 'newValue' para o backend/banco de dados ---
-                console.log('Salvando dados:', newValue);
-                alert('Dados salvos com sucesso!');
-                // --- Fim da chamada ao backend ---
-
-                // 3. Alterna a visibilidade dos elementos
-                inputField.style.display = 'none';
-                textSpan.style.display = 'inline';
-
-                // 4. Muda o ícone de volta para "editar" (upload)
-                icon.classList.remove('bi-check-lg');
-                icon.classList.add('bi-upload');
-
-                // 5. Remove a classe de controle 'editing'
-                row.classList.remove('editing');
+                editableField.removeAttribute('readonly');
+                editableField.classList.add('editing'); // Adiciona classe para feedback visual
+                editableField.focus(); // Foca no campo para o usuário digitar
+                
+                // Altera o ícone para "Salvar" (check)
+                btnIcon.classList.remove('bi-box-arrow-up');
+                btnIcon.classList.add('bi-check-lg');
+                
+                // Atualiza o tooltip
+                btnTooltip.setContent({ '.tooltip-inner': 'Salvar Alterações' });
+                
             } else {
-                // --- MODO EDITAR ---
-                // 1. Alterna a visibilidade
-                textSpan.style.display = 'none';
-                inputField.style.display = 'block';
-                inputField.focus(); // Foca no campo para digitação imediata
+                // MODO SALVAR: Se o campo está editável, salva e bloqueia
+                
+                editableField.setAttribute('readonly', true);
+                editableField.classList.remove('editing');
+                
+                // Altera o ícone de volta para "Enviar/Editar"
+                btnIcon.classList.remove('bi-check-lg');
+                btnIcon.classList.add('bi-box-arrow-up');
 
-                // 2. Muda o ícone para "salvar" (check)
-                icon.classList.remove('bi-upload');
-                icon.classList.add('bi-check-lg');
+                // Atualiza o tooltip
+                btnTooltip.setContent({ '.tooltip-inner': 'Habilitar Edição' });
 
-                // 3. Adiciona uma classe para sabermos que estamos em modo de edição
-                row.classList.add('editing');
+                // Simulação: Aqui você enviaria o dado para o backend
+                console.log('Valor salvo:', editableField.value);
+                alert('Retorno salvo com sucesso!');
             }
         });
-    });
-});
