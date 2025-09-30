@@ -1,26 +1,37 @@
-// BACKEND/CONTROLLER/feedback.js
-const express = require("express");
-const router = express.Router();
-const Feedback = require("../MODEL/Feedback");
+const { DataTypes } = require("sequelize");
 
-// Rota: listar todos os feedbacks
-router.get("/", async (req, res) => {
-  try {
-    const feedbacks = await Feedback.findAll();
-    res.json(feedbacks);
-  } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar feedbacks" });
-  }
-});
+module.exports = (sequelize) => {
+  const Feedback = sequelize.define("Feedback", {
+    id: { 
+      type: DataTypes.INTEGER, 
+      primaryKey: true, 
+      autoIncrement: true 
+    },
+    feedback_text: { 
+      type: DataTypes.TEXT 
+    },
+    pontos_melhorar: { 
+      type: DataTypes.TEXT 
+    },
+    data: { 
+      type: DataTypes.DATE, 
+      defaultValue: DataTypes.NOW 
+    },
+    enviado: { 
+      type: DataTypes.BOOLEAN, 
+      defaultValue: false 
+    },
+    funcionarioId: { 
+      type: DataTypes.INTEGER, 
+      allowNull: false 
+    },
+    gestorId: { 
+      type: DataTypes.INTEGER, 
+      allowNull: false 
+    }
+  }, {
+    tableName: 'feedbacks'
+  });
 
-// Rota: criar um novo feedback
-router.post("/", async (req, res) => {
-  try {
-    const novoFeedback = await Feedback.create(req.body);
-    res.json(novoFeedback);
-  } catch (err) {
-    res.status(500).json({ error: "Erro ao criar feedback" });
-  }
-});
-
-module.exports = router;
+  return Feedback;
+};
