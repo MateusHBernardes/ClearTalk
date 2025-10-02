@@ -43,6 +43,34 @@ app.use("/users", userRoutes);
 app.use("/feedbacks", feedbackRoutes);
 app.use("/times", timeRoutes);
 
+// ✅ ROTA PARA BUSCAR USUÁRIOS COM SEUS TIMES
+app.get("/users-with-teams", async (req, res) => {
+  try {
+    const users = await User.findAll({
+      include: [{
+        model: Time,
+        attributes: ['id', 'nome']
+      }]
+    });
+    res.json({ success: true, data: users });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ✅ ROTA PARA ASSOCIAR USUÁRIO A TIME
+app.put("/users/:id/team", async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ success: false, error: "Usuário não encontrado" });
+
+    await user.update({ timeId: req.body.timeId });
+    res.json({ success: true, data: user });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // ✅ SINCRONIZAR E INICIAR
 sequelize.authenticate()
   .then(() => {
@@ -66,6 +94,7 @@ sequelize.authenticate()
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
       console.log(`📊 Acesse: http://localhost:${PORT}`);
+      console.log(`👥 Users with teams: http://localhost:${PORT}/users-with-teams`);
     });
   })
   .catch(err => {
