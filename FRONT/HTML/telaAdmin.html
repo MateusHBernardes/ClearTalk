@@ -6,14 +6,11 @@
     <title>Painel do Administrador</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../CSS/telaAdmin.css">
-
 </head>
 <body>
 
@@ -33,118 +30,147 @@
             <form id="userForm">
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="userName" class="form-label">NOME</label>
+                        <label for="userName" class="form-label">NOME COMPLETO</label>
                         <input type="text" class="form-control" id="userName" required>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="userSector" class="form-label">SETOR</label>
-                        <input type="text" class="form-control" id="userSector" required>
-                    </div>
-                     <div class="col-md-6 mb-3">
-                        <label for="userRole" class="form-label">CARGO</label>
-                        <input type="text" class="form-control" id="userRole" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
                         <label for="userCPF" class="form-label">CPF</label>
-                        <input type="text" class="form-control" id="userCPF" required>
+                        <input type="text" class="form-control" id="userCPF" placeholder="000.000.000-00" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="userSector" class="form-label">SETOR</label>
+                        <div class="input-group">
+                            <select class="form-select" id="userSector" required>
+                                <option value="">Selecione um setor</option>
+                            </select>
+                            <button type="button" class="btn btn-outline-secondary" onclick="showNewSectorModal()">
+                                <i class="bi bi-plus-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="userTeam" class="form-label">TIME</label>
+                        <div class="input-group">
+                            <select class="form-select" id="userTeam">
+                                <option value="">Selecione um time</option>
+                                <option value="novo">➕ Criar novo time</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="userRole" class="form-label">CARGO</label>
+                        <select class="form-select" id="userRole" required>
+                            <option value="">Selecione um cargo</option>
+                            <option value="funcionario">Funcionário</option>
+                            <option value="gestor">Gestor</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3" id="gestorField" style="display: none;">
+                        <label for="userGestor" class="form-label">GESTOR RESPONSÁVEL</label>
+                        <select class="form-select" id="userGestor">
+                            <option value="">Selecione um gestor</option>
+                        </select>
                     </div>
                 </div>
                 <div class="text-center mt-2">
-                    <button type="submit" class="btn btn-salvar">SALVAR</button>
-                </div>
-            </form>
-        </section>
-
-        <section class="form-container mb-5">
-            <h3 class="section-title">Cadastrar Time</h3>
-            <form id="teamForm">
-                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="teamName" class="form-label">NOME</label>
-                        <input type="text" class="form-control" id="teamName" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="teamManager" class="form-label">GESTOR</label>
-                        <input type="text" class="form-control" id="teamManager" required>
-                    </div>
-                </div>
-                <div class="text-center mt-2">
-                    <button type="submit" class="btn btn-salvar">SALVAR</button>
+                    <button type="submit" class="btn btn-salvar">SALVAR USUÁRIO</button>
+                    <button type="button" class="btn btn-limpar ms-2" onclick="clearUserForm()">LIMPAR</button>
                 </div>
             </form>
         </section>
 
         <section class="table-container mb-5">
-            <div class="table-header">Usuários</div>
+            <div class="table-header">Usuários Cadastrados</div>
             <div class="table-responsive">
                 <table class="table table-custom" id="usersTable">
                     <thead>
                         <tr>
                             <th>NOME</th>
                             <th>SETOR</th>
+                            <th>TIME</th>
                             <th>CARGO</th>
                             <th>STATUS</th>
                             <th>CPF</th>
-                            <th>EDITAR</th>
+                            <th>AÇÕES</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
-                        <tr data-id="1">
-                            <td>FULANO</td>
-                            <td>TI</td>
-                            <td>GESTOR</td>
-                            <td>
-                                <button class="action-button status-user-btn" title="Inativar Usuário">
-                                    <i class="bi bi-unlock-fill"></i>
-                                </button>
-                            </td>
-                            <td>***.***.***-**</td>
-                            <td>
-                                <button class="action-button edit-user-btn" title="Editar Usuário">
-                                    <i class="bi bi-plus-square"></i>
-                                </button>
-                            </td>
-                        </tr>
+                        <!-- Dados carregados via JavaScript -->
                     </tbody>
                 </table>
             </div>
         </section>
 
-         <section class="table-container">
-            <div class="table-header">Times</div>
+        <section class="table-container">
+            <div class="table-header">Visão Geral dos Times</div>
             <div class="table-responsive">
                 <table class="table table-custom" id="teamsTable">
                     <thead>
                         <tr>
-                            <th>NOME</th>
+                            <th>TIME</th>
+                            <th>SETOR</th>
                             <th>GESTOR</th>
-                            <th>ATIVO</th>
-                            <th>EDITAR</th>
+                            <th>COLABORADORES</th>
+                            <th>STATUS</th>
                         </tr>
                     </thead>
                     <tbody id="teamsTableBody">
-                        <tr data-id="1">
-                            <td>TIME</td>
-                            <td>FULANO</td>
-                             <td>
-                                <button class="action-button status-team-btn" title="Inativar Time">
-                                    <i class="bi bi-unlock-fill"></i>
-                                </button>
-                            </td>
-                            <td>
-                                <button class="action-button edit-team-btn" title="Editar Time">
-                                    <i class="bi bi-plus-square"></i>
-                                </button>
-                            </td>
-                        </tr>
+                        <!-- Dados carregados via JavaScript -->
                     </tbody>
                 </table>
             </div>
         </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Modal para Novo Setor -->
+    <div class="modal fade" id="newSectorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Novo Setor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control" id="newSectorName" placeholder="Digite o nome do novo setor">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-salvar" onclick="addNewSector()">Adicionar Setor</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Modal para Novo Time -->
+    <div class="modal fade" id="newTeamModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Novo Time</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="newTeamName" class="form-label">Nome do Time</label>
+                        <input type="text" class="form-control" id="newTeamName" placeholder="Digite o nome do time">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newTeamSector" class="form-label">Setor</label>
+                        <select class="form-select" id="newTeamSector">
+                            <option value="">Selecione um setor</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-salvar" onclick="addNewTeam()">Criar Time</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../JS/telaAdmin.js"></script>
 
 </body>

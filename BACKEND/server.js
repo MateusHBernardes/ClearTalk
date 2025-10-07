@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const { Sequelize } = require("sequelize");
+const { Sequelize, Op } = require("sequelize");
 
 // ✅ CONFIGURAÇÃO DO BANCO SQLITE
 const sequelize = new Sequelize({
@@ -26,7 +26,15 @@ User.hasMany(Feedback, { foreignKey: "funcionarioId", as: "FeedbacksRecebidos" }
 Feedback.belongsTo(User, { foreignKey: "funcionarioId", as: "Funcionario" });
 
 const app = express();
-app.use(cors());
+
+// ✅ CONFIGURAÇÃO CORRETA DO CORS
+app.use(cors({
+  origin: ["http://127.0.0.1:5500", "http://localhost:5500", "http://localhost:3000"],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(bodyParser.json());
 
 // ✅ ROTA DE TESTE
@@ -71,6 +79,26 @@ app.put("/users/:id/team", async (req, res) => {
   }
 });
 
+// ✅ ROTA PARA OBTER SETORES ÚNICOS - AGORA NA POSIÇÃO CORRETA!
+app.get("/setores", async (req, res) => {
+  try {
+    const setores = await User.findAll({
+      attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('setor')), 'setor']],
+      where: {
+        setor: {
+          [Op.ne]: null
+        }
+      },
+      order: [['setor', 'ASC']]
+    });
+    
+    const setoresList = setores.map(item => item.setor).filter(Boolean);
+    res.json({ success: true, data: setoresList });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ✅ SINCRONIZAR E INICIAR
 sequelize.authenticate()
   .then(() => {
@@ -95,6 +123,7 @@ sequelize.authenticate()
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
       console.log(`📊 Acesse: http://localhost:${PORT}`);
       console.log(`👥 Users with teams: http://localhost:${PORT}/users-with-teams`);
+      console.log(`📂 Setores: http://localhost:${PORT}/setores`);
     });
   })
   .catch(err => {

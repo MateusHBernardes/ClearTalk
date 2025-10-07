@@ -1,4 +1,4 @@
-// FRONT/JS/telaAdmin.js - VERSÃO COMPATÍVEL COM SEU HTML
+// FRONT/JS/telaAdmin.js - VERSÃO SIMPLIFICADA E PROFISSIONAL
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ telaAdmin.js carregado');
     
@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Carregar dados iniciais
     loadUsers();
-    loadTimes();
+    loadSetores();
+    loadTeams();
+    loadGestores();
     setupEventListeners();
 });
 
@@ -47,7 +49,7 @@ function setupEventListeners() {
         });
     }
 
-    // ✅ CORREÇÃO: Configurar handlers para formulários na página (não modais)
+    // Formulário de usuário
     const userForm = document.getElementById('userForm');
     if (userForm) {
         userForm.addEventListener('submit', function(e) {
@@ -56,23 +58,230 @@ function setupEventListeners() {
                 console.error('Erro no submit do usuário:', error);
             });
         });
-        console.log('✅ Formulário de usuário configurado');
     }
 
-    const teamForm = document.getElementById('teamForm');
-    if (teamForm) {
-        teamForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            saveTeam().catch(error => {
-                console.error('Erro no submit do time:', error);
-            });
+    // Mostrar/ocultar campo de gestor baseado no cargo
+    const userRole = document.getElementById('userRole');
+    if (userRole) {
+        userRole.addEventListener('change', function() {
+            const gestorField = document.getElementById('gestorField');
+            if (this.value === 'funcionario') {
+                gestorField.style.display = 'block';
+            } else {
+                gestorField.style.display = 'none';
+            }
         });
-        console.log('✅ Formulário de time configurado');
+    }
+
+    // Criar novo time
+    const userTeam = document.getElementById('userTeam');
+    if (userTeam) {
+        userTeam.addEventListener('change', function() {
+            if (this.value === 'novo') {
+                showNewTeamModal();
+                this.value = '';
+            }
+        });
+    }
+
+    // Máscara de CPF
+    const userCPF = document.getElementById('userCPF');
+    if (userCPF) {
+        userCPF.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.substring(0, 11);
+            
+            if (value.length <= 11) {
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            }
+            
+            e.target.value = value;
+        });
     }
 }
 
-// ========== GERENCIAMENTO DE USUÁRIOS ==========
+// ✅ CARREGAMENTO DE DADOS
+async function loadSetores() {
+    console.log('📂 Carregando setores...');
+    try {
+        const response = await fetch('http://localhost:3000/setores');
+        const result = await response.json();
+        
+        if (result.success) {
+            const setorSelect = document.getElementById('userSector');
+            const teamSectorSelect = document.getElementById('newTeamSector');
+            
+            if (setorSelect) {
+                setorSelect.innerHTML = '<option value="">Selecione um setor</option>';
+                result.data.forEach(setor => {
+                    const option = document.createElement('option');
+                    option.value = setor;
+                    option.textContent = setor;
+                    setorSelect.appendChild(option);
+                });
+            }
+            
+            if (teamSectorSelect) {
+                teamSectorSelect.innerHTML = '<option value="">Selecione um setor</option>';
+                result.data.forEach(setor => {
+                    const option = document.createElement('option');
+                    option.value = setor;
+                    option.textContent = setor;
+                    teamSectorSelect.appendChild(option);
+                });
+            }
+            
+            console.log(`✅ ${result.data.length} setores carregados`);
+        }
+    } catch (error) {
+        console.error('❌ Erro ao carregar setores:', error);
+    }
+}
 
+async function loadTeams() {
+    console.log('📂 Carregando times...');
+    try {
+        const response = await fetch('http://localhost:3000/teams');
+        const result = await response.json();
+        
+        if (result.success) {
+            const teamSelect = document.getElementById('userTeam');
+            if (teamSelect) {
+                // Manter a primeira opção e a opção de criar novo
+                const firstOption = teamSelect.options[0];
+                const newOption = teamSelect.options[1];
+                teamSelect.innerHTML = '';
+                teamSelect.appendChild(firstOption);
+                teamSelect.appendChild(newOption);
+                
+                result.data.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = team.nome;
+                    teamSelect.appendChild(option);
+                });
+            }
+            console.log(`✅ ${result.data.length} times carregados`);
+        }
+    } catch (error) {
+        console.error('❌ Erro ao carregar times:', error);
+    }
+}
+
+async function loadGestores() {
+    console.log('📂 Carregando gestores...');
+    try {
+        const response = await fetch('http://localhost:3000/gestores');
+        const result = await response.json();
+        
+        if (result.success) {
+            const gestorSelect = document.getElementById('userGestor');
+            if (gestorSelect) {
+                gestorSelect.innerHTML = '<option value="">Selecione um gestor</option>';
+                result.data.forEach(gestor => {
+                    const option = document.createElement('option');
+                    option.value = gestor.id;
+                    option.textContent = gestor.nome;
+                    gestorSelect.appendChild(option);
+                });
+            }
+            console.log(`✅ ${result.data.length} gestores carregados`);
+        }
+    } catch (error) {
+        console.error('❌ Erro ao carregar gestores:', error);
+    }
+}
+
+// ✅ MODAIS
+function showNewSectorModal() {
+    const modal = new bootstrap.Modal(document.getElementById('newSectorModal'));
+    document.getElementById('newSectorName').value = '';
+    modal.show();
+}
+
+function showNewTeamModal() {
+    const modal = new bootstrap.Modal(document.getElementById('newTeamModal'));
+    document.getElementById('newTeamName').value = '';
+    document.getElementById('newTeamSector').value = '';
+    modal.show();
+}
+
+async function addNewSector() {
+    const newSectorName = document.getElementById('newSectorName').value.trim();
+    
+    if (!newSectorName) {
+        alert('Digite o nome do setor');
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/setores', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ nome: newSectorName })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('newSectorModal')).hide();
+            await loadSetores();
+            showAlert('✅ Setor criado com sucesso!', 'success');
+        } else {
+            throw new Error(result.error || 'Erro ao criar setor');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao criar setor:', error);
+        alert('❌ Erro ao criar setor: ' + error.message);
+    }
+}
+
+async function addNewTeam() {
+    const newTeamName = document.getElementById('newTeamName').value.trim();
+    const newTeamSector = document.getElementById('newTeamSector').value;
+    
+    if (!newTeamName) {
+        alert('Digite o nome do time');
+        return;
+    }
+
+    if (!newTeamSector) {
+        alert('Selecione um setor para o time');
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/teams', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                nome: newTeamName,
+                setor: newTeamSector
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('newTeamModal')).hide();
+            await loadTeams();
+            showAlert('✅ Time criado com sucesso!', 'success');
+        } else {
+            throw new Error(result.error || 'Erro ao criar time');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao criar time:', error);
+        alert('❌ Erro ao criar time: ' + error.message);
+    }
+}
+
+// ✅ GERENCIAMENTO DE USUÁRIOS
 async function loadUsers() {
     console.log('📥 Carregando usuários...');
     try {
@@ -82,44 +291,105 @@ async function loadUsers() {
         if (result.success) {
             console.log(`✅ ${result.data.length} usuários carregados`);
             displayUsers(result.data);
+            displayTeamsOverview(result.data);
         } else {
             console.error('❌ Erro na resposta:', result.error);
-            alert('Erro ao carregar usuários: ' + result.error);
         }
     } catch (error) {
         console.error('❌ Erro ao carregar usuários:', error);
-        alert('Erro de conexão com o servidor. Verifique se o backend está rodando.');
     }
 }
 
 function displayUsers(users) {
     const usersTableBody = document.getElementById('usersTableBody');
-    if (!usersTableBody) {
-        console.error('❌ Tabela de usuários não encontrada');
-        return;
-    }
+    if (!usersTableBody) return;
 
     usersTableBody.innerHTML = users.map(user => `
         <tr data-id="${user.id}">
             <td>${user.nome}</td>
             <td>${user.setor || '-'}</td>
-            <td>${user.cargo}</td>
+            <td>${user.timeNome || '-'}</td>
             <td>
-                <button class="action-button status-user-btn" onclick="toggleUserStatus(${user.id}, ${!user.status})" title="${user.status ? 'Inativar' : 'Ativar'} Usuário">
-                    <i class="bi ${user.status ? 'bi-unlock-fill' : 'bi-lock-fill'}"></i>
+                <span class="badge ${getCargoBadgeClass(user.cargo)}">
+                    ${formatCargo(user.cargo)}
+                </span>
+            </td>
+            <td>
+                <button class="action-button status-user-btn" onclick="toggleUserStatus(${user.id}, ${!user.status})" 
+                        title="${user.status ? 'Inativar' : 'Ativar'}">
+                    <i class="bi ${user.status ? 'bi-person-check-fill text-success' : 'bi-person-x-fill text-danger'}"></i>
                 </button>
             </td>
-            <td>${user.cpf}</td>
+            <td>${formatCPF(user.cpf)}</td>
             <td>
-                <button class="action-button edit-user-btn" onclick="editUser(${user.id})" title="Editar Usuário">
-                    <i class="bi bi-plus-square"></i>
+                <button class="action-button edit-user-btn" onclick="editUser(${user.id})" title="Editar">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="action-button delete-user-btn" onclick="deleteUser(${user.id})" title="Excluir">
+                    <i class="bi bi-trash-fill text-danger"></i>
                 </button>
             </td>
         </tr>
     `).join('');
 }
 
-// ✅ CORREÇÃO: Função para preencher formulário com dados do usuário para edição
+function displayTeamsOverview(users) {
+    const teamsTableBody = document.getElementById('teamsTableBody');
+    if (!teamsTableBody) return;
+
+    // Agrupar usuários por time
+    const teamsMap = {};
+    users.forEach(user => {
+        const teamKey = user.timeNome || 'Sem Time';
+        if (!teamsMap[teamKey]) {
+            teamsMap[teamKey] = {
+                setor: user.setor || '-',
+                gestor: users.find(u => u.timeNome === teamKey && u.cargo === 'gestor')?.nome || '-',
+                colaboradores: 0,
+                status: true
+            };
+        }
+        teamsMap[teamKey].colaboradores++;
+    });
+
+    teamsTableBody.innerHTML = Object.entries(teamsMap).map(([time, data]) => `
+        <tr>
+            <td><strong>${time}</strong></td>
+            <td>${data.setor}</td>
+            <td>${data.gestor}</td>
+            <td>
+                <span class="badge bg-info">${data.colaboradores} colaboradores</span>
+            </td>
+            <td>
+                <span class="badge bg-success">Ativo</span>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function formatCPF(cpf) {
+    if (!cpf) return '-';
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+function formatCargo(cargo) {
+    const cargos = {
+        'admin': 'Administrador',
+        'gestor': 'Gestor',
+        'funcionario': 'Funcionário'
+    };
+    return cargos[cargo] || cargo;
+}
+
+function getCargoBadgeClass(cargo) {
+    const classes = {
+        'admin': 'bg-danger',
+        'gestor': 'bg-warning',
+        'funcionario': 'bg-info'
+    };
+    return classes[cargo] || 'bg-secondary';
+}
+
 async function editUser(userId) {
     try {
         const response = await fetch(`http://localhost:3000/users/${userId}`);
@@ -128,22 +398,27 @@ async function editUser(userId) {
         if (result.success) {
             const user = result.data;
             
-            // Preencher formulário com dados do usuário
             document.getElementById('userName').value = user.nome;
             document.getElementById('userSector').value = user.setor || '';
+            document.getElementById('userTeam').value = user.timeId || '';
             document.getElementById('userRole').value = user.cargo;
             document.getElementById('userCPF').value = user.cpf;
+            document.getElementById('userGestor').value = user.gestorId || '';
             
-            // Adicionar ID do usuário como data attribute no formulário
-            document.getElementById('userForm').setAttribute('data-editing-id', userId);
-            
-            // Mudar texto do botão para indicar edição
-            const submitBtn = document.querySelector('#userForm button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.textContent = 'ATUALIZAR';
+            // Mostrar/ocultar gestor baseado no cargo
+            const gestorField = document.getElementById('gestorField');
+            if (user.cargo === 'funcionario') {
+                gestorField.style.display = 'block';
             }
             
-            console.log('✅ Formulário preenchido para edição do usuário:', user.nome);
+            document.getElementById('userForm').setAttribute('data-editing-id', userId);
+            
+            const submitBtn = document.querySelector('#userForm button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.textContent = 'ATUALIZAR USUÁRIO';
+                submitBtn.classList.add('btn-warning');
+            }
+            
         }
     } catch (error) {
         console.error('Erro:', error);
@@ -151,38 +426,37 @@ async function editUser(userId) {
     }
 }
 
-// ✅ CORREÇÃO: Função saveUser adaptada para formulário na página
 async function saveUser() {
-    console.log('💾 Tentando salvar usuário...');
+    console.log('💾 Salvando usuário...');
 
     try {
-        // ✅ OBTER ELEMENTOS DO FORMULÁRIO NA PÁGINA
         const userName = document.getElementById('userName');
         const userSector = document.getElementById('userSector');
+        const userTeam = document.getElementById('userTeam');
         const userRole = document.getElementById('userRole');
         const userCPF = document.getElementById('userCPF');
+        const userGestor = document.getElementById('userGestor');
         const userForm = document.getElementById('userForm');
 
-        if (!userName || !userSector || !userRole || !userCPF) {
-            throw new Error('Elementos do formulário de usuário não encontrados');
+        // VALIDAÇÃO
+        if (!userName.value || !userSector.value || !userRole.value || !userCPF.value) {
+            throw new Error('Preencha todos os campos obrigatórios');
         }
 
-        // Verificar se é edição ou criação
+        if (userRole.value === 'funcionario' && !userGestor.value) {
+            throw new Error('Funcionários devem ter um gestor responsável');
+        }
+
         const editingId = userForm.getAttribute('data-editing-id');
         const userData = {
             nome: userName.value,
             setor: userSector.value,
+            timeId: userTeam.value || null,
             cargo: userRole.value,
-            cpf: userCPF.value,
-            status: true // Sempre ativo ao criar/editar
+            cpf: userCPF.value.replace(/\D/g, ''),
+            gestorId: userRole.value === 'funcionario' ? userGestor.value : null,
+            status: true
         };
-
-        console.log('📤 Dados do usuário para salvar:', userData);
-
-        // ✅ VALIDAÇÃO BÁSICA
-        if (!userData.nome || !userData.cargo || !userData.cpf) {
-            throw new Error('Preencha todos os campos obrigatórios: Nome, Cargo e CPF');
-        }
 
         const url = editingId ? `http://localhost:3000/users/${editingId}` : 'http://localhost:3000/users';
         const method = editingId ? 'PUT' : 'POST';
@@ -198,25 +472,31 @@ async function saveUser() {
         const result = await response.json();
 
         if (result.success) {
-            // ✅ LIMPAR FORMULÁRIO E RECARREGAR DADOS
-            userForm.reset();
-            userForm.removeAttribute('data-editing-id');
-            
-            // Restaurar texto do botão
-            const submitBtn = document.querySelector('#userForm button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.textContent = 'SALVAR';
-            }
-            
+            clearUserForm();
             await loadUsers();
+            await loadGestores();
             showAlert('✅ Usuário salvo com sucesso!', 'success');
-            console.log('✅ Usuário salvo com sucesso:', result.data);
         } else {
             throw new Error(result.error || 'Erro desconhecido ao salvar usuário');
         }
     } catch (error) {
         console.error('❌ Erro ao salvar usuário:', error);
         alert('❌ Erro ao salvar usuário: ' + error.message);
+    }
+}
+
+function clearUserForm() {
+    const userForm = document.getElementById('userForm');
+    if (userForm) {
+        userForm.reset();
+        userForm.removeAttribute('data-editing-id');
+        document.getElementById('gestorField').style.display = 'none';
+        
+        const submitBtn = userForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'SALVAR USUÁRIO';
+            submitBtn.classList.remove('btn-warning');
+        }
     }
 }
 
@@ -248,165 +528,35 @@ async function toggleUserStatus(userId, newStatus) {
     }
 }
 
-// ========== GERENCIAMENTO DE TIMES ==========
-
-async function loadTimes() {
-    try {
-        const response = await fetch('http://localhost:3000/times');
-        const result = await response.json();
-        
-        if (result.success) {
-            displayTimes(result.data);
-        } else {
-            alert('❌ Erro ao carregar times: ' + result.error);
-        }
-    } catch (error) {
-        console.error('Erro:', error);
-    }
-}
-
-function displayTimes(times) {
-    const teamsTableBody = document.getElementById('teamsTableBody');
-    if (!teamsTableBody) return;
-
-    teamsTableBody.innerHTML = times.map(time => `
-        <tr data-id="${time.id}">
-            <td>${time.nome}</td>
-            <td>${time.gestorId ? `ID: ${time.gestorId}` : 'Sem gestor'}</td>
-            <td>
-                <button class="action-button status-team-btn" onclick="toggleTeamStatus(${time.id})" title="Inativar Time">
-                    <i class="bi bi-unlock-fill"></i>
-                </button>
-            </td>
-            <td>
-                <button class="action-button edit-team-btn" onclick="editTeam(${time.id})" title="Editar Time">
-                    <i class="bi bi-plus-square"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// ✅ CORREÇÃO: Função para preencher formulário de time para edição
-async function editTeam(teamId) {
-    try {
-        const response = await fetch(`http://localhost:3000/times/${teamId}`);
-        const result = await response.json();
-        
-        if (result.success) {
-            const team = result.data;
-            
-            // Preencher formulário com dados do time
-            document.getElementById('teamName').value = team.nome;
-            document.getElementById('teamManager').value = team.gestorId || '';
-            
-            // Adicionar ID do time como data attribute no formulário
-            document.getElementById('teamForm').setAttribute('data-editing-id', teamId);
-            
-            // Mudar texto do botão para indicar edição
-            const submitBtn = document.querySelector('#teamForm button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.textContent = 'ATUALIZAR';
-            }
-            
-            console.log('✅ Formulário preenchido para edição do time:', team.nome);
-        }
-    } catch (error) {
-        console.error('Erro:', error);
-        alert('❌ Erro ao carregar dados do time');
-    }
-}
-
-// ✅ CORREÇÃO: Função saveTeam adaptada para formulário na página
-async function saveTeam() {
-    console.log('💾 Tentando salvar time...');
-
-    try {
-        // ✅ OBTER ELEMENTOS DO FORMULÁRIO NA PÁGINA
-        const teamName = document.getElementById('teamName');
-        const teamManager = document.getElementById('teamManager');
-        const teamForm = document.getElementById('teamForm');
-
-        if (!teamName || !teamManager) {
-            throw new Error('Elementos do formulário de time não encontrados');
-        }
-
-        // Verificar se é edição ou criação
-        const editingId = teamForm.getAttribute('data-editing-id');
-        const teamData = {
-            nome: teamName.value,
-            gestorId: teamManager.value || null
-        };
-
-        // ✅ VALIDAÇÃO BÁSICA
-        if (!teamData.nome) {
-            throw new Error('Preencha o nome do time');
-        }
-
-        const url = editingId ? `http://localhost:3000/times/${editingId}` : 'http://localhost:3000/times';
-        const method = editingId ? 'PUT' : 'POST';
-
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(teamData)
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // ✅ LIMPAR FORMULÁRIO E RECARREGAR DADOS
-            teamForm.reset();
-            teamForm.removeAttribute('data-editing-id');
-            
-            // Restaurar texto do botão
-            const submitBtn = document.querySelector('#teamForm button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.textContent = 'SALVAR';
-            }
-            
-            loadTimes();
-            showAlert('✅ Time salvo com sucesso!', 'success');
-            console.log('✅ Time salvo com sucesso:', result.data);
-        } else {
-            throw new Error(result.error || 'Erro desconhecido ao salvar time');
-        }
-    } catch (error) {
-        console.error('❌ Erro ao salvar time:', error);
-        alert('❌ Erro ao salvar time: ' + error.message);
-    }
-}
-
-async function toggleTeamStatus(teamId) {
-    if (!confirm('Tem certeza que deseja inativar este time?')) {
+async function deleteUser(userId) {
+    if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
         return;
     }
 
     try {
-        const response = await fetch(`http://localhost:3000/times/${teamId}`, {
+        const response = await fetch(`http://localhost:3000/users/${userId}`, {
             method: 'DELETE'
         });
 
         const result = await response.json();
 
         if (result.success) {
-            loadTimes();
-            showAlert('✅ Time inativado com sucesso!', 'success');
+            loadUsers();
+            showAlert('✅ Usuário excluído com sucesso!', 'success');
         } else {
-            alert('❌ Erro ao inativar time: ' + result.error);
+            alert('❌ Erro ao excluir usuário: ' + result.error);
         }
     } catch (error) {
         console.error('Erro:', error);
-        alert('❌ Erro ao inativar time');
+        alert('❌ Erro ao excluir usuário');
     }
 }
 
-// ========== FUNÇÕES UTILITÁRIAS ==========
-
+// ✅ FUNÇÕES UTILITÁRIAS
 function showAlert(message, type) {
-    // Criar alerta Bootstrap
+    const existingAlerts = document.querySelectorAll('.alert');
+    existingAlerts.forEach(alert => alert.remove());
+
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
     alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
@@ -417,73 +567,9 @@ function showAlert(message, type) {
     
     document.body.appendChild(alertDiv);
     
-    // Auto-remover após 5 segundos
     setTimeout(() => {
         if (alertDiv.parentNode) {
             alertDiv.remove();
         }
     }, 5000);
 }
-
-// ✅ CORREÇÃO: Adicionar função para limpar formulários
-function clearForms() {
-    const userForm = document.getElementById('userForm');
-    const teamForm = document.getElementById('teamForm');
-    
-    if (userForm) {
-        userForm.reset();
-        userForm.removeAttribute('data-editing-id');
-        const userBtn = userForm.querySelector('button[type="submit"]');
-        if (userBtn) userBtn.textContent = 'SALVAR';
-    }
-    
-    if (teamForm) {
-        teamForm.reset();
-        teamForm.removeAttribute('data-editing-id');
-        const teamBtn = teamForm.querySelector('button[type="submit"]');
-        if (teamBtn) teamBtn.textContent = 'SALVAR';
-    }
-}
-
-// ✅ CORREÇÃO: Adicionar botões de limpar formulários (opcional)
-document.addEventListener('DOMContentLoaded', function() {
-    // Adicionar botão de limpar ao formulário de usuário
-    const userForm = document.getElementById('userForm');
-    if (userForm) {
-        const clearBtn = document.createElement('button');
-        clearBtn.type = 'button';
-        clearBtn.className = 'btn btn-secondary ms-2';
-        clearBtn.textContent = 'LIMPAR';
-        clearBtn.onclick = function() {
-            userForm.reset();
-            userForm.removeAttribute('data-editing-id');
-            const submitBtn = userForm.querySelector('button[type="submit"]');
-            if (submitBtn) submitBtn.textContent = 'SALVAR';
-        };
-        
-        const buttonContainer = userForm.querySelector('.text-center');
-        if (buttonContainer) {
-            buttonContainer.appendChild(clearBtn);
-        }
-    }
-
-    // Adicionar botão de limpar ao formulário de time
-    const teamForm = document.getElementById('teamForm');
-    if (teamForm) {
-        const clearBtn = document.createElement('button');
-        clearBtn.type = 'button';
-        clearBtn.className = 'btn btn-secondary ms-2';
-        clearBtn.textContent = 'LIMPAR';
-        clearBtn.onclick = function() {
-            teamForm.reset();
-            teamForm.removeAttribute('data-editing-id');
-            const submitBtn = teamForm.querySelector('button[type="submit"]');
-            if (submitBtn) submitBtn.textContent = 'SALVAR';
-        };
-        
-        const buttonContainer = teamForm.querySelector('.text-center');
-        if (buttonContainer) {
-            buttonContainer.appendChild(clearBtn);
-        }
-    }
-});
