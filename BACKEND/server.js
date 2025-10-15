@@ -6,19 +6,15 @@ const { Sequelize, Op } = require("sequelize");
 // ✅ CONFIGURAÇÃO DO BANCO SQLITE
 const sequelize = new Sequelize({
   dialect: "sqlite",
-  storage: "./database.sqlite", // Arquivo na pasta BACKEND
+  storage: "./database.sqlite",
   logging: false
 });
 
-// ✅ INICIALIZAR MODELOS
+// ✅ INICIALIZAR MODELOS - APENAS USUÁRIOS E FEEDBACKS
 const User = require("./MODEL/User")(sequelize);
-const Time = require("./MODEL/Time")(sequelize);
 const Feedback = require("./MODEL/Feedback")(sequelize);
 
-// ✅ CONFIGURAR ASSOCIAÇÕES MANUALMENTE (SEM associations.js)
-Time.hasMany(User, { foreignKey: "timeId" });
-User.belongsTo(Time, { foreignKey: "timeId" });
-
+// ✅ CONFIGURAR ASSOCIAÇÕES - SEM TIMES
 User.hasMany(Feedback, { foreignKey: "gestorId", as: "FeedbacksCriados" });
 Feedback.belongsTo(User, { foreignKey: "gestorId", as: "Gestor" });
 
@@ -42,23 +38,18 @@ app.get("/", (req, res) => {
   res.json({ message: "✅ API ClearTalk funcionando!", status: "OK" });
 });
 
-// ✅ IMPORTAR ROTAS
+// ✅ IMPORTAR ROTAS - SEM TIMES
 const userRoutes = require("./CONTROLLER/user")(User);
 const feedbackRoutes = require("./CONTROLLER/feedback")(Feedback, User);
-const timeRoutes = require("./CONTROLLER/time")(Time);
 
 app.use("/users", userRoutes);
 app.use("/feedbacks", feedbackRoutes);
-app.use("/times", timeRoutes);
 
-// ✅ ROTA PARA BUSCAR USUÁRIOS COM SEUS TIMES
-app.get("/users-with-teams", async (req, res) => {
+// ✅ ROTA PARA BUSCAR TODOS OS USUÁRIOS
+app.get("/users-all", async (req, res) => {
   try {
     const users = await User.findAll({
-      include: [{
-        model: Time,
-        attributes: ['id', 'nome']
-      }]
+      order: [['setor', 'ASC'], ['nome', 'ASC']]
     });
     res.json({ success: true, data: users });
   } catch (err) {
@@ -66,20 +57,7 @@ app.get("/users-with-teams", async (req, res) => {
   }
 });
 
-// ✅ ROTA PARA ASSOCIAR USUÁRIO A TIME
-app.put("/users/:id/team", async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) return res.status(404).json({ success: false, error: "Usuário não encontrado" });
-
-    await user.update({ timeId: req.body.timeId });
-    res.json({ success: true, data: user });
-  } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
-  }
-});
-
-// ✅ ROTA PARA OBTER SETORES ÚNICOS - AGORA NA POSIÇÃO CORRETA!
+// ✅ ROTA PARA OBTER SETORES ÚNICOS
 app.get("/setores", async (req, res) => {
   try {
     const setores = await User.findAll({
@@ -122,7 +100,7 @@ sequelize.authenticate()
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
       console.log(`📊 Acesse: http://localhost:${PORT}`);
-      console.log(`👥 Users with teams: http://localhost:${PORT}/users-with-teams`);
+      console.log(`👥 Todos usuários: http://localhost:${PORT}/users-all`);
       console.log(`📂 Setores: http://localhost:${PORT}/setores`);
     });
   })

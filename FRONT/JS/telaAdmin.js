@@ -1,4 +1,4 @@
-// FRONT/JS/telaAdmin.js - VERSÃO SIMPLIFICADA E PROFISSIONAL
+// FRONT/JS/telaAdmin.js - VERSÃO ATUALIZADA COM STATUS NOS SETORES
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ telaAdmin.js carregado');
     
@@ -31,8 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Carregar dados iniciais
     loadUsers();
     loadSetores();
-    loadTeams();
-    loadGestores();
     setupEventListeners();
 });
 
@@ -58,320 +56,239 @@ function setupEventListeners() {
                 console.error('Erro no submit do usuário:', error);
             });
         });
+        console.log('✅ Formulário de usuário configurado');
     }
 
-    // Mostrar/ocultar campo de gestor baseado no cargo
-    const userRole = document.getElementById('userRole');
-    if (userRole) {
-        userRole.addEventListener('change', function() {
-            const gestorField = document.getElementById('gestorField');
-            if (this.value === 'funcionario') {
-                gestorField.style.display = 'block';
-            } else {
-                gestorField.style.display = 'none';
+    // ✅ SISTEMA PARA ADICIONAR NOVOS SETORES
+    const userSectorSelect = document.getElementById('userSector');
+    if (userSectorSelect) {
+        userSectorSelect.addEventListener('change', function() {
+            if (this.value === 'new') {
+                const newSector = prompt('Digite o nome do novo setor:');
+                if (newSector && newSector.trim()) {
+                    // Adiciona a nova opção ao dropdown
+                    addSectorToDropdown(newSector.trim());
+                    // Seleciona o novo setor
+                    this.value = newSector.trim();
+                } else {
+                    this.value = '';
+                }
             }
-        });
-    }
-
-    // Criar novo time
-    const userTeam = document.getElementById('userTeam');
-    if (userTeam) {
-        userTeam.addEventListener('change', function() {
-            if (this.value === 'novo') {
-                showNewTeamModal();
-                this.value = '';
-            }
-        });
-    }
-
-    // Máscara de CPF
-    const userCPF = document.getElementById('userCPF');
-    if (userCPF) {
-        userCPF.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.substring(0, 11);
-            
-            if (value.length <= 11) {
-                value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                value = value.replace(/(\d{3})(\d)/, '$1.$2');
-                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-            }
-            
-            e.target.value = value;
         });
     }
 }
 
-// ✅ CARREGAMENTO DE DADOS
+// ✅ FUNÇÃO: Adicionar setor ao dropdown
+function addSectorToDropdown(setorName) {
+    const setorSelect = document.getElementById('userSector');
+    if (setorSelect) {
+        // Verificar se o setor já existe
+        const existingOption = setorSelect.querySelector(`option[value="${setorName}"]`);
+        if (!existingOption) {
+            const option = document.createElement('option');
+            option.value = setorName;
+            option.textContent = setorName;
+            // Insere antes da opção "Adicionar novo setor"
+            setorSelect.insertBefore(option, setorSelect.lastChild);
+        }
+    }
+}
+
+// ✅ CARREGAMENTO DE SETORES
 async function loadSetores() {
     console.log('📂 Carregando setores...');
     try {
         const response = await fetch('http://localhost:3000/setores');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Resposta não é JSON');
+        }
+        
         const result = await response.json();
         
         if (result.success) {
             const setorSelect = document.getElementById('userSector');
-            const teamSectorSelect = document.getElementById('newTeamSector');
-            
             if (setorSelect) {
-                setorSelect.innerHTML = '<option value="">Selecione um setor</option>';
+                setorSelect.innerHTML = `
+                    <option value="">Selecione um setor</option>
+                    <option value="new">➕ Adicionar novo setor</option>
+                `;
+                
+                // Adicionar setores existentes
                 result.data.forEach(setor => {
                     const option = document.createElement('option');
                     option.value = setor;
                     option.textContent = setor;
                     setorSelect.appendChild(option);
                 });
+                
+                console.log(`✅ ${result.data.length} setores carregados`);
             }
-            
-            if (teamSectorSelect) {
-                teamSectorSelect.innerHTML = '<option value="">Selecione um setor</option>';
-                result.data.forEach(setor => {
-                    const option = document.createElement('option');
-                    option.value = setor;
-                    option.textContent = setor;
-                    teamSectorSelect.appendChild(option);
-                });
-            }
-            
-            console.log(`✅ ${result.data.length} setores carregados`);
+        } else {
+            console.error('❌ Erro na resposta:', result.error);
         }
     } catch (error) {
         console.error('❌ Erro ao carregar setores:', error);
+        loadDefaultSetores();
     }
 }
 
-async function loadTeams() {
-    console.log('📂 Carregando times...');
-    try {
-        const response = await fetch('http://localhost:3000/teams');
-        const result = await response.json();
+// ✅ FUNÇÃO: Carregar setores padrão em caso de erro
+function loadDefaultSetores() {
+    const setorSelect = document.getElementById('userSector');
+    if (setorSelect) {
+        const defaultSetores = ['TI', 'RH', 'Financeiro', 'Compras', 'Vendas', 'Marketing'];
+        setorSelect.innerHTML = '<option value="">Selecione um setor</option>';
         
-        if (result.success) {
-            const teamSelect = document.getElementById('userTeam');
-            if (teamSelect) {
-                // Manter a primeira opção e a opção de criar novo
-                const firstOption = teamSelect.options[0];
-                const newOption = teamSelect.options[1];
-                teamSelect.innerHTML = '';
-                teamSelect.appendChild(firstOption);
-                teamSelect.appendChild(newOption);
-                
-                result.data.forEach(team => {
-                    const option = document.createElement('option');
-                    option.value = team.id;
-                    option.textContent = team.nome;
-                    teamSelect.appendChild(option);
-                });
-            }
-            console.log(`✅ ${result.data.length} times carregados`);
-        }
-    } catch (error) {
-        console.error('❌ Erro ao carregar times:', error);
-    }
-}
-
-async function loadGestores() {
-    console.log('📂 Carregando gestores...');
-    try {
-        const response = await fetch('http://localhost:3000/gestores');
-        const result = await response.json();
+        defaultSetores.forEach(setor => {
+            const option = document.createElement('option');
+            option.value = setor;
+            option.textContent = setor;
+            setorSelect.appendChild(option);
+        });
         
-        if (result.success) {
-            const gestorSelect = document.getElementById('userGestor');
-            if (gestorSelect) {
-                gestorSelect.innerHTML = '<option value="">Selecione um gestor</option>';
-                result.data.forEach(gestor => {
-                    const option = document.createElement('option');
-                    option.value = gestor.id;
-                    option.textContent = gestor.nome;
-                    gestorSelect.appendChild(option);
-                });
-            }
-            console.log(`✅ ${result.data.length} gestores carregados`);
-        }
-    } catch (error) {
-        console.error('❌ Erro ao carregar gestores:', error);
+        // Adicionar opção para novo setor
+        const newOption = document.createElement('option');
+        newOption.value = 'new';
+        newOption.textContent = '➕ Adicionar novo setor';
+        setorSelect.appendChild(newOption);
+        
+        console.log('✅ Setores padrão carregados');
     }
 }
 
-// ✅ MODAIS
-function showNewSectorModal() {
-    const modal = new bootstrap.Modal(document.getElementById('newSectorModal'));
-    document.getElementById('newSectorName').value = '';
-    modal.show();
-}
+// ========== GERENCIAMENTO DE USUÁRIOS ==========
 
-function showNewTeamModal() {
-    const modal = new bootstrap.Modal(document.getElementById('newTeamModal'));
-    document.getElementById('newTeamName').value = '';
-    document.getElementById('newTeamSector').value = '';
-    modal.show();
-}
-
-async function addNewSector() {
-    const newSectorName = document.getElementById('newSectorName').value.trim();
-    
-    if (!newSectorName) {
-        alert('Digite o nome do setor');
-        return;
-    }
-
-    try {
-        const response = await fetch('http://localhost:3000/setores', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ nome: newSectorName })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            bootstrap.Modal.getInstance(document.getElementById('newSectorModal')).hide();
-            await loadSetores();
-            showAlert('✅ Setor criado com sucesso!', 'success');
-        } else {
-            throw new Error(result.error || 'Erro ao criar setor');
-        }
-    } catch (error) {
-        console.error('❌ Erro ao criar setor:', error);
-        alert('❌ Erro ao criar setor: ' + error.message);
-    }
-}
-
-async function addNewTeam() {
-    const newTeamName = document.getElementById('newTeamName').value.trim();
-    const newTeamSector = document.getElementById('newTeamSector').value;
-    
-    if (!newTeamName) {
-        alert('Digite o nome do time');
-        return;
-    }
-
-    if (!newTeamSector) {
-        alert('Selecione um setor para o time');
-        return;
-    }
-
-    try {
-        const response = await fetch('http://localhost:3000/teams', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                nome: newTeamName,
-                setor: newTeamSector
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            bootstrap.Modal.getInstance(document.getElementById('newTeamModal')).hide();
-            await loadTeams();
-            showAlert('✅ Time criado com sucesso!', 'success');
-        } else {
-            throw new Error(result.error || 'Erro ao criar time');
-        }
-    } catch (error) {
-        console.error('❌ Erro ao criar time:', error);
-        alert('❌ Erro ao criar time: ' + error.message);
-    }
-}
-
-// ✅ GERENCIAMENTO DE USUÁRIOS
 async function loadUsers() {
     console.log('📥 Carregando usuários...');
     try {
-        const response = await fetch('http://localhost:3000/users-with-teams');
+        const response = await fetch('http://localhost:3000/users-all');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Resposta não é JSON');
+        }
+        
         const result = await response.json();
         
         if (result.success) {
             console.log(`✅ ${result.data.length} usuários carregados`);
             displayUsers(result.data);
-            displayTeamsOverview(result.data);
+            displaySetoresOverview(result.data); // ✅ ATUALIZADO: Mostrar visão dos setores COM STATUS
         } else {
             console.error('❌ Erro na resposta:', result.error);
+            alert('Erro ao carregar usuários: ' + result.error);
         }
     } catch (error) {
         console.error('❌ Erro ao carregar usuários:', error);
+        alert('Erro de conexão com o servidor. Verifique se o backend está rodando.');
     }
 }
 
 function displayUsers(users) {
     const usersTableBody = document.getElementById('usersTableBody');
-    if (!usersTableBody) return;
+    if (!usersTableBody) {
+        console.error('❌ Tabela de usuários não encontrada');
+        return;
+    }
 
     usersTableBody.innerHTML = users.map(user => `
         <tr data-id="${user.id}">
             <td>${user.nome}</td>
             <td>${user.setor || '-'}</td>
-            <td>${user.timeNome || '-'}</td>
             <td>
                 <span class="badge ${getCargoBadgeClass(user.cargo)}">
                     ${formatCargo(user.cargo)}
                 </span>
             </td>
             <td>
+                <span class="badge ${user.status ? 'bg-success' : 'bg-danger'}">
+                    ${user.status ? 'Ativo' : 'Inativo'}
+                </span>
                 <button class="action-button status-user-btn" onclick="toggleUserStatus(${user.id}, ${!user.status})" 
-                        title="${user.status ? 'Inativar' : 'Ativar'}">
-                    <i class="bi ${user.status ? 'bi-person-check-fill text-success' : 'bi-person-x-fill text-danger'}"></i>
+                        title="${user.status ? 'Inativar' : 'Ativar'} Usuário"
+                        style="margin-left: 8px;">
+                    <i class="bi ${user.status ? 'bi-person-check' : 'bi-person-x'}"></i>
                 </button>
             </td>
-            <td>${formatCPF(user.cpf)}</td>
+            <td>${user.cpf}</td>
             <td>
-                <button class="action-button edit-user-btn" onclick="editUser(${user.id})" title="Editar">
+                <button class="action-button edit-user-btn" onclick="editUser(${user.id})" title="Editar Usuário">
                     <i class="bi bi-pencil-square"></i>
                 </button>
-                <button class="action-button delete-user-btn" onclick="deleteUser(${user.id})" title="Excluir">
-                    <i class="bi bi-trash-fill text-danger"></i>
-                </button>
             </td>
         </tr>
     `).join('');
 }
 
-function displayTeamsOverview(users) {
-    const teamsTableBody = document.getElementById('teamsTableBody');
-    if (!teamsTableBody) return;
+// ✅ ATUALIZADO: Função para mostrar visão geral dos setores COM STATUS
+function displaySetoresOverview(users) {
+    const setoresTableBody = document.getElementById('setoresTableBody');
+    if (!setoresTableBody) return;
 
-    // Agrupar usuários por time
-    const teamsMap = {};
+    // Agrupar usuários por setor
+    const setoresMap = {};
     users.forEach(user => {
-        const teamKey = user.timeNome || 'Sem Time';
-        if (!teamsMap[teamKey]) {
-            teamsMap[teamKey] = {
-                setor: user.setor || '-',
-                gestor: users.find(u => u.timeNome === teamKey && u.cargo === 'gestor')?.nome || '-',
+        const setorKey = user.setor || 'Sem Setor';
+        if (!setoresMap[setorKey]) {
+            setoresMap[setorKey] = {
                 colaboradores: 0,
-                status: true
+                gestor: '-',
+                status: 'Ativo' // Status padrão para setores
             };
         }
-        teamsMap[teamKey].colaboradores++;
+        setoresMap[setorKey].colaboradores++;
+        
+        // Encontrar gestor do setor
+        if (user.cargo === 'gestor' && user.setor === setorKey) {
+            setoresMap[setorKey].gestor = user.nome;
+        }
     });
 
-    teamsTableBody.innerHTML = Object.entries(teamsMap).map(([time, data]) => `
+    setoresTableBody.innerHTML = Object.entries(setoresMap).map(([setor, data]) => `
         <tr>
-            <td><strong>${time}</strong></td>
-            <td>${data.setor}</td>
+            <td><strong>${setor}</strong></td>
+            <td>
+                <span class="badge bg-info">${data.colaboradores} colaborador(es)</span>
+            </td>
             <td>${data.gestor}</td>
             <td>
-                <span class="badge bg-info">${data.colaboradores} colaboradores</span>
-            </td>
-            <td>
-                <span class="badge bg-success">Ativo</span>
+                <select class="form-select status-setor" data-setor="${setor}" style="width: 120px;">
+                    <option value="Ativo" ${data.status === 'Ativo' ? 'selected' : ''}>✅ Ativo</option>
+                    <option value="Instituto" ${data.status === 'Instituto' ? 'selected' : ''}>✅ Instituto</option>
+                </select>
             </td>
         </tr>
     `).join('');
+
+    // Adicionar event listeners para os dropdowns de status dos setores
+    document.querySelectorAll('.status-setor').forEach(select => {
+        select.addEventListener('change', function() {
+            const setor = this.getAttribute('data-setor');
+            const status = this.value;
+            updateSetorStatus(setor, status);
+        });
+    });
 }
 
-function formatCPF(cpf) {
-    if (!cpf) return '-';
-    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+// ✅ NOVA FUNÇÃO: Atualizar status do setor
+function updateSetorStatus(setorName, status) {
+    console.log(`📝 Atualizando status do setor ${setorName} para: ${status}`);
+    // Aqui você pode adicionar a lógica para salvar no backend
+    // Por enquanto, apenas mostra um alerta
+    showAlert(`Status do setor ${setorName} atualizado para ${status}`, 'success');
 }
 
+// ✅ FUNÇÕES: Formatação de cargos
 function formatCargo(cargo) {
     const cargos = {
         'admin': 'Administrador',
@@ -398,27 +315,24 @@ async function editUser(userId) {
         if (result.success) {
             const user = result.data;
             
+            // Preencher formulário com dados do usuário
             document.getElementById('userName').value = user.nome;
             document.getElementById('userSector').value = user.setor || '';
-            document.getElementById('userTeam').value = user.timeId || '';
             document.getElementById('userRole').value = user.cargo;
             document.getElementById('userCPF').value = user.cpf;
-            document.getElementById('userGestor').value = user.gestorId || '';
             
-            // Mostrar/ocultar gestor baseado no cargo
-            const gestorField = document.getElementById('gestorField');
-            if (user.cargo === 'funcionario') {
-                gestorField.style.display = 'block';
-            }
-            
+            // Adicionar ID do usuário como data attribute no formulário
             document.getElementById('userForm').setAttribute('data-editing-id', userId);
             
+            // Mudar texto do botão para indicar edição
             const submitBtn = document.querySelector('#userForm button[type="submit"]');
             if (submitBtn) {
                 submitBtn.textContent = 'ATUALIZAR USUÁRIO';
+                submitBtn.classList.remove('btn-salvar');
                 submitBtn.classList.add('btn-warning');
             }
             
+            console.log('✅ Formulário preenchido para edição do usuário:', user.nome);
         }
     } catch (error) {
         console.error('Erro:', error);
@@ -427,36 +341,45 @@ async function editUser(userId) {
 }
 
 async function saveUser() {
-    console.log('💾 Salvando usuário...');
+    console.log('💾 Tentando salvar usuário...');
 
     try {
+        // ✅ OBTER ELEMENTOS DO FORMULÁRIO
         const userName = document.getElementById('userName');
         const userSector = document.getElementById('userSector');
-        const userTeam = document.getElementById('userTeam');
         const userRole = document.getElementById('userRole');
         const userCPF = document.getElementById('userCPF');
-        const userGestor = document.getElementById('userGestor');
         const userForm = document.getElementById('userForm');
 
-        // VALIDAÇÃO
-        if (!userName.value || !userSector.value || !userRole.value || !userCPF.value) {
-            throw new Error('Preencha todos os campos obrigatórios');
+        if (!userName || !userSector || !userRole || !userCPF) {
+            throw new Error('Elementos do formulário de usuário não encontrados');
         }
 
-        if (userRole.value === 'funcionario' && !userGestor.value) {
-            throw new Error('Funcionários devem ter um gestor responsável');
+        // ✅ VALIDAÇÃO DOS DROPDOWNS
+        if (!userRole.value) {
+            throw new Error('Selecione um cargo');
         }
 
+        if (!userSector.value) {
+            throw new Error('Selecione ou adicione um setor');
+        }
+
+        // Verificar se é edição ou criação
         const editingId = userForm.getAttribute('data-editing-id');
         const userData = {
             nome: userName.value,
             setor: userSector.value,
-            timeId: userTeam.value || null,
             cargo: userRole.value,
-            cpf: userCPF.value.replace(/\D/g, ''),
-            gestorId: userRole.value === 'funcionario' ? userGestor.value : null,
+            cpf: userCPF.value,
             status: true
         };
+
+        console.log('📤 Dados do usuário para salvar:', userData);
+
+        // ✅ VALIDAÇÃO BÁSICA
+        if (!userData.nome || !userData.cargo || !userData.cpf) {
+            throw new Error('Preencha todos os campos obrigatórios');
+        }
 
         const url = editingId ? `http://localhost:3000/users/${editingId}` : 'http://localhost:3000/users';
         const method = editingId ? 'PUT' : 'POST';
@@ -472,10 +395,16 @@ async function saveUser() {
         const result = await response.json();
 
         if (result.success) {
+            // ✅ RECARREGAR SETORES SE FOR UM NOVO
+            if (userSector.value && !document.querySelector(`#userSector option[value="${userSector.value}"]`)) {
+                addSectorToDropdown(userSector.value);
+            }
+            
+            // ✅ LIMPAR FORMULÁRIO E RECARREGAR DADOS
             clearUserForm();
-            await loadUsers();
-            await loadGestores();
+            await loadUsers(); // Isso também recarrega a visão dos setores
             showAlert('✅ Usuário salvo com sucesso!', 'success');
+            console.log('✅ Usuário salvo com sucesso:', result.data);
         } else {
             throw new Error(result.error || 'Erro desconhecido ao salvar usuário');
         }
@@ -485,17 +414,18 @@ async function saveUser() {
     }
 }
 
+// ✅ FUNÇÃO: Limpar formulário de usuário
 function clearUserForm() {
     const userForm = document.getElementById('userForm');
     if (userForm) {
         userForm.reset();
         userForm.removeAttribute('data-editing-id');
-        document.getElementById('gestorField').style.display = 'none';
         
         const submitBtn = userForm.querySelector('button[type="submit"]');
         if (submitBtn) {
             submitBtn.textContent = 'SALVAR USUÁRIO';
             submitBtn.classList.remove('btn-warning');
+            submitBtn.classList.add('btn-salvar');
         }
     }
 }
@@ -528,35 +458,9 @@ async function toggleUserStatus(userId, newStatus) {
     }
 }
 
-async function deleteUser(userId) {
-    if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
-        return;
-    }
+// ========== FUNÇÕES UTILITÁRIAS ==========
 
-    try {
-        const response = await fetch(`http://localhost:3000/users/${userId}`, {
-            method: 'DELETE'
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            loadUsers();
-            showAlert('✅ Usuário excluído com sucesso!', 'success');
-        } else {
-            alert('❌ Erro ao excluir usuário: ' + result.error);
-        }
-    } catch (error) {
-        console.error('Erro:', error);
-        alert('❌ Erro ao excluir usuário');
-    }
-}
-
-// ✅ FUNÇÕES UTILITÁRIAS
 function showAlert(message, type) {
-    const existingAlerts = document.querySelectorAll('.alert');
-    existingAlerts.forEach(alert => alert.remove());
-
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
     alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';

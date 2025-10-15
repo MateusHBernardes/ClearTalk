@@ -14,6 +14,10 @@ module.exports = (sequelize) => {
     gestorId: { 
       type: DataTypes.INTEGER, 
       allowNull: true 
+    },
+    setor: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     tableName: 'times'
