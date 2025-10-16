@@ -230,7 +230,7 @@ function displayUsers(users) {
     `).join('');
 }
 
-// ✅ ATUALIZADO: Função para mostrar visão geral dos setores COM STATUS
+// ✅ ATUALIZADO: Função para mostrar visão geral dos setores COM STATUS CENTRALIZADO
 function displaySetoresOverview(users) {
     const setoresTableBody = document.getElementById('setoresTableBody');
     if (!setoresTableBody) return;
@@ -262,9 +262,9 @@ function displaySetoresOverview(users) {
             </td>
             <td>${data.gestor}</td>
             <td>
-                <select class="form-select status-setor" data-setor="${setor}" style="width: 120px;">
+                <select class="form-select status-setor" data-setor="${setor}">
                     <option value="Ativo" ${data.status === 'Ativo' ? 'selected' : ''}>✅ Ativo</option>
-                    <option value="Instituto" ${data.status === 'Instituto' ? 'selected' : ''}>✅ Instituto</option>
+                    <option value="Inativo" ${data.status === 'Inativo' ? 'selected' : ''}>❌ Inativo</option>
                 </select>
             </td>
         </tr>
