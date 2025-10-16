@@ -475,5 +475,5 @@ function showAlert(message, type) {
         if (alertDiv.parentNode) {
             alertDiv.remove();
         }
-    }, 5000);
+    }, 5000); 
 }
