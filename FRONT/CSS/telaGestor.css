@@ -1,164 +1,275 @@
-        /* --------------------
-         * Estilização Base e Variáveis
-         * -------------------- */
-         :root {
-            --cor-fundo: #e0e0e0;
-            --cor-form-fundo: #cce7e8;
-            --cor-form-borda: #b3d8d9;
-            --cor-input-fundo: #d6e0bb;
-            --cor-tabela-fundo: #d6e0bb;
-            --cor-tabela-borda: #9fcb3a;
-            --cor-header-tabela: #c7d3a8;
-            --cor-texto: #5d6645;
-            --cor-botao: #9fcb3a;
-            --cor-borda-botao: #88af2b;
-        }
+/* --------------------
+ * Estilização Base e Variáveis
+ * -------------------- */
+ :root {
+    --cor-fundo: #e0e0e0;
+    --cor-form-fundo: #cce7e8;
+    --cor-form-borda: #b3d8d9;
+    --cor-input-fundo: #d6e0bb;
+    --cor-tabela-fundo: #d6e0bb;
+    --cor-tabela-borda: #9fcb3a;
+    --cor-header-tabela: #c7d3a8;
+    --cor-texto: #5d6645;
+    --cor-botao: #9fcb3a;
+    --cor-borda-botao: #88af2b;
+}
 
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--cor-fundo);
-        }
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--cor-fundo);
+}
 
-        .page-container {
-            padding-top: 80px;
-            padding-bottom: 40px;
-        }
+.page-container {
+    padding-top: 80px;
+    padding-bottom: 40px;
+}
 
-        /* --------------------
-         * Cabeçalho (Logo e Botão Sair)
-         * -------------------- */
-        .logo-container-top {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        
-        .logo-container-top img {
-            width: 60px;
-        }
-        
-        .logout-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 55px;
-            height: 55px;
-            background-color: var(--cor-botao);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            text-decoration: none;
-            transition: transform 0.2s ease;
-        }
+/* --------------------
+ * Cabeçalho (Logo e Botão Sair)
+ * -------------------- */
+.logo-container-top {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
 
-        .logout-button:hover {
-            color: white;
-            transform: scale(1.1);
-        }
+.logo-container-top img {
+    width: 60px;
+}
 
-        /* --------------------
-         * Container do Formulário de Feedback
-         * -------------------- */
-        .feedback-form-container {
-            background-color: var(--cor-form-fundo);
-            border: 2px solid var(--cor-form-borda);
-            border-radius: 8px;
-            padding: 2rem;
-        }
+.logout-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 55px;
+    height: 55px;
+    background-color: var(--cor-botao);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
 
-        .form-label {
-            color: var(--cor-texto);
-            font-weight: 600;
-            font-size: 0.8rem;
-            margin-bottom: 0.25rem;
-        }
+.logout-button:hover {
+    color: white;
+    transform: scale(1.1);
+}
 
-        .form-control {
-            background-color: var(--cor-input-fundo);
-            border: none;
-            border-radius: 4px;
-            color: var(--cor-texto);
-        }
+/* --------------------
+ * Títulos de Seção
+ * -------------------- */
+.section-title {
+    color: var(--cor-texto);
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
 
-        .form-control:focus {
-            background-color: var(--cor-input-fundo);
-            color: var(--cor-texto);
-            box-shadow: 0 0 0 0.25rem rgba(159, 203, 58, 0.25);
-            border: none;
-        }
+/* --------------------
+ * Container do Formulário de Feedback
+ * -------------------- */
+.feedback-form-container {
+    background-color: var(--cor-form-fundo);
+    border: 2px solid var(--cor-form-borda);
+    border-radius: 8px;
+    padding: 2rem;
+}
 
-        .btn-salvar {
-            background-color: var(--cor-botao);
-            border: 2px solid var(--cor-borda-botao);
-            color: var(--cor-texto);
-            font-weight: 600;
-            padding: 10px 40px;
-            transition: background-color 0.2s ease-in-out;
-        }
+.form-label {
+    color: var(--cor-texto);
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+}
 
-        .btn-salvar:hover {
-            background-color: var(--cor-borda-botao);
-            border-color: var(--cor-borda-botao);
-            color: white;
-        }
+.form-label.required::after {
+    content: " *";
+    color: #dc3545;
+}
 
-        /* --------------------
-         * Container do Histórico (Reutilizado da tela anterior)
-         * -------------------- */
-        .history-container {
-            background-color: var(--cor-tabela-fundo);
-            border: 3px solid var(--cor-tabela-borda);
-            border-radius: 8px;
-            overflow: hidden;
-        }
+.form-control, .form-select {
+    background-color: var(--cor-input-fundo);
+    border: none;
+    border-radius: 4px;
+    color: var(--cor-texto);
+}
 
-        .history-header {
-            background-color: var(--cor-header-tabela);
-            padding: 10px;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--cor-texto);
-            border-bottom: 3px solid var(--cor-tabela-borda);
-        }
-        
-        .table-custom {
-            --bs-table-bg: transparent;
-            --bs-table-border-color: var(--cor-tabela-borda);
-            color: var(--cor-texto);
-            font-size: 0.9rem;
-            margin-bottom: 0;
-        }
+.form-control:focus, .form-select:focus {
+    background-color: var(--cor-input-fundo);
+    color: var(--cor-texto);
+    box-shadow: 0 0 0 0.25rem rgba(159, 203, 58, 0.25);
+    border: none;
+}
 
-        .table-custom thead th {
-            background-color: var(--cor-header-tabela);
-            border: none;
-            font-weight: 600;
-            text-align: center;
-            vertical-align: middle;
-        }
+.btn-salvar {
+    background-color: var(--cor-botao);
+    border: 2px solid var(--cor-borda-botao);
+    color: var(--cor-texto);
+    font-weight: 600;
+    padding: 10px 40px;
+    transition: background-color 0.2s ease-in-out;
+}
 
-        .table-custom tbody td {
-            text-align: center;
-            vertical-align: middle;
-            padding: 12px 8px;
-        }
-        
-        .table-custom tbody tr {
-            border-top: 1px solid var(--cor-tabela-borda);
-        }
+.btn-salvar:hover {
+    background-color: var(--cor-borda-botao);
+    border-color: var(--cor-borda-botao);
+    color: white;
+}
 
-        .action-button {
-            background: none;
-            border: none;
-            color: var(--cor-texto);
-            font-size: 1.4rem;
-            cursor: pointer;
-        }
+.btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+    color: white;
+}
+
+/* --------------------
+ * Container do Histórico
+ * -------------------- */
+.history-container {
+    background-color: var(--cor-tabela-fundo);
+    border: 3px solid var(--cor-tabela-borda);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.history-header {
+    background-color: var(--cor-header-tabela);
+    padding: 10px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--cor-texto);
+    border-bottom: 3px solid var(--cor-tabela-borda);
+    text-transform: uppercase;
+}
+
+.table-custom {
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--cor-tabela-borda);
+    color: var(--cor-texto);
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.table-custom thead th {
+    background-color: var(--cor-header-tabela);
+    border: none;
+    font-weight: 600;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 2px solid var(--cor-tabela-borda) !important;
+}
+
+.table-custom tbody td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 12px 8px;
+}
+
+.table-custom tbody tr {
+    border-top: 1px solid var(--cor-tabela-borda);
+}
+
+/* --------------------
+ * Botões de Ação
+ * -------------------- */
+.action-button {
+    background: none;
+    border: none;
+    color: var(--cor-texto);
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin: 0 3px;
+    transition: color 0.2s ease;
+}
+
+.action-button:hover {
+    color: var(--cor-borda-botao);
+}
+
+.edit-btn {
+    color: #ffc107;
+}
+
+.send-btn {
+    color: #28a745;
+}
+
+.delete-btn {
+    color: #dc3545;
+}
+
+/* --------------------
+ * Status e Badges
+ * -------------------- */
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.4em 0.6em;
+}
+
+.bg-success { background-color: #28a745 !important; }
+.bg-warning { background-color: #ffc107 !important; color: #212529; }
+.bg-secondary { background-color: #6c757d !important; }
+
+/* --------------------
+ * Modal
+ * -------------------- */
+.modal-content {
+    background-color: var(--cor-form-fundo);
+    border: 2px solid var(--cor-form-borda);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--cor-form-borda);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--cor-form-borda);
+}
+
+/* --------------------
+ * Alertas
+ * -------------------- */
+.alert {
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    min-width: 300px;
+}
+
+/* --------------------
+ * Textarea com altura fixa para tabela
+ * -------------------- */
+.table-textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    resize: none;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--cor-texto);
+}
+
+.table-textarea:focus {
+    outline: none;
+    background-color: rgba(255, 255, 255, 0.3);
+}

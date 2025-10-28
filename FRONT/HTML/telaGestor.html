@@ -29,11 +29,15 @@
     <main class="page-container container">
         
         <section class="feedback-form-container mb-5">
+            <h3 class="section-title">Criar Feedback</h3>
             <form id="feedbackForm">
+                <input type="hidden" id="feedbackId">
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="funcionarioNome" class="form-label">FUNCIONÁRIO</label>
-                        <input type="text" class="form-control" id="funcionarioNome" required>
+                        <label for="funcionarioSelect" class="form-label required">FUNCIONÁRIO</label>
+                        <select class="form-control" id="funcionarioSelect" required>
+                            <option value="">Selecione um funcionário</option>
+                        </select>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="funcionarioSetor" class="form-label">SETOR</label>
@@ -45,22 +49,23 @@
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label for="feedbackTexto" class="form-label">FEEDBACK</label>
+                    <label for="feedbackTexto" class="form-label required">FEEDBACK</label>
                     <textarea class="form-control" id="feedbackTexto" rows="4" required></textarea>
                 </div>
                 <div class="mb-3">
-                    <label for="pontosMelhorar" class="form-label">PONTOS A MELHORAR</label>
+                    <label for="pontosMelhorar" class="form-label required">PONTOS A MELHORAR</label>
                     <textarea class="form-control" id="pontosMelhorar" rows="4" required></textarea>
                 </div>
                 <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-salvar">SALVAR</button>
+                    <button type="submit" class="btn btn-salvar">SALVAR FEEDBACK</button>
+                    <button type="button" class="btn btn-secondary ms-2" onclick="limparFormulario()">LIMPAR</button>
                 </div>
             </form>
         </section>
 
         <section class="history-container">
             <div class="history-header">
-                HISTÓRICO
+                HISTÓRICO DE FEEDBACKS
             </div>
             <div class="table-responsive">
                 <table class="table table-custom">
@@ -69,41 +74,41 @@
                             <th>NOME</th>
                             <th>SETOR</th>
                             <th>FEEDBACK</th>
-                            <th>P. M</th>
-                            <th>EDITAR</th>
-                            <th>ENVIAR</th>
+                            <th>PONTOS A MELHORAR</th>
+                            <th>DATA</th>
+                            <th>STATUS</th>
+                            <th>AÇÕES</th>
                         </tr>
                     </thead>
                     <tbody id="historyTableBody">
-                        <tr 
-                            data-nome="FULANO" 
-                            data-setor="TI" 
-                            data-feedback="Este é o feedback inicial para o Fulano." 
-                            data-pontos="É preciso melhorar a organização das tarefas."
-                        >
-                            <td>FULANO</td>
-                            <td>TI</td>
-                            <td><i class="bi bi-check-circle"></i></td>
-                            <td><i class="bi bi-circle"></i></td>
-                            <td>
-                                <button class="action-button edit-btn" title="Editar Feedback">
-                                    <i class="bi bi-plus-square"></i>
-                                </button>
-                            </td>
-                            <td>
-                                <button class="action-button send-btn" title="Enviar para Funcionário">
-                                    <i class="bi bi-box-arrow-up"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        </tbody>
+                        <!-- Dados serão carregados via JavaScript -->
+                    </tbody>
                 </table>
             </div>
         </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Modal de Confirmação de Envio -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Envio</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja enviar este feedback para o funcionário?</p>
+                    <p><strong>Esta ação não pode ser desfeita.</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmSendBtn">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../JS/telaGestor.js"></script>
     
 </body>

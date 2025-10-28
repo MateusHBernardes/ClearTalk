@@ -49,6 +49,7 @@ app.use("/feedbacks", feedbackRoutes);
 app.get("/users-all", async (req, res) => {
   try {
     const users = await User.findAll({
+      attributes: ['id', 'nome', 'setor', 'cargo', 'status', 'cpf'],
       order: [['setor', 'ASC'], ['nome', 'ASC']]
     });
     res.json({ success: true, data: users });
@@ -102,6 +103,7 @@ sequelize.authenticate()
       console.log(`📊 Acesse: http://localhost:${PORT}`);
       console.log(`👥 Todos usuários: http://localhost:${PORT}/users-all`);
       console.log(`📂 Setores: http://localhost:${PORT}/setores`);
+      console.log(`📝 Feedbacks: http://localhost:${PORT}/feedbacks`);
     });
   })
   .catch(err => {
