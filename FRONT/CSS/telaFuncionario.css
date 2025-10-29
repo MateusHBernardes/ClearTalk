@@ -1,142 +1,110 @@
-        /* --------------------
-         * Estilização Base
-         * -------------------- */
-         :root {
-            --cor-fundo: #e0e0e0;
-            --cor-tabela-fundo: #d6e0bb;
-            --cor-tabela-borda: #9fcb3a;
-            --cor-header-tabela: #c7d3a8;
-            --cor-texto: #5d6645;
-            --cor-botao-sair: #9fcb3a;
-        }
+:root {
+    --cor-fundo: #e0e0e0;
+    --cor-tabela-fundo: #d6e0bb;
+    --cor-tabela-borda: #9fcb3a;
+    --cor-header-tabela: #c7d3a8;
+    --cor-texto: #5d6645;
+    --cor-botao-sair: #9fcb3a;
+}
 
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            font-family: 'Poppins', sans-serif;
-        }
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+}
 
-        body {
-            background-color: var(--cor-fundo);
-        }
+body {
+    background-color: var(--cor-fundo);
+}
 
-        .page-container {
-            padding-top: 80px; /* Espaço para a logo e botão */
-            padding-bottom: 40px;
-        }
+.page-container {
+    padding-top: 80px;
+    padding-bottom: 40px;
+}
 
-        /* --------------------
-         * Logo e Botão Sair
-         * -------------------- */
-        .logo-container-top {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        
-        .logo-container-top img {
-            width: 60px;
-        }
-        
-        .logout-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 55px;
-            height: 55px;
-            background-color: var(--cor-botao-sair);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            text-decoration: none;
-            transition: transform 0.2s ease;
-        }
+.logo-container-top {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
 
-        .logout-button:hover {
-            color: white;
-            transform: scale(1.1);
-        }
+.logo-container-top img {
+    width: 60px;
+}
 
-        /* --------------------
-         * Container do Histórico
-         * -------------------- */
-        .history-container {
-            background-color: var(--cor-tabela-fundo);
-            border: 3px solid var(--cor-tabela-borda);
-            border-radius: 8px;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0;
-            overflow: hidden; /* Garante que o conteúdo respeite o border-radius */
-        }
+.logout-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 55px;
+    height: 55px;
+    background-color: var(--cor-botao-sair);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
 
-        .history-header {
-            background-color: var(--cor-header-tabela);
-            padding: 10px;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--cor-texto);
-            border-bottom: 3px solid var(--cor-tabela-borda);
-        }
-        
-        /* --------------------
-         * Tabela customizada
-         * -------------------- */
-        .table-custom {
-            --bs-table-bg: transparent; /* Remove o fundo padrão do Bootstrap */
-            --bs-table-border-color: var(--cor-tabela-borda);
-            color: var(--cor-texto);
-            font-size: 0.9rem;
-            margin-bottom: 0; /* Remove a margem padrão da tabela */
-        }
+.logout-button:hover {
+    color: white;
+    transform: scale(1.1);
+}
 
-        .table-custom thead th {
-            background-color: var(--cor-header-tabela);
-            border: none;
-            font-weight: 600;
-            text-align: center;
-            vertical-align: middle;
-        }
+.history-container {
+    background-color: var(--cor-tabela-fundo);
+    border: 3px solid var(--cor-tabela-borda);
+    border-radius: 8px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0;
+    overflow: hidden;
+}
 
-        .table-custom tbody td {
-            text-align: center;
-            vertical-align: middle;
-            padding: 12px 8px;
-        }
-        
-        .table-custom tbody tr {
-            border-top: 1px solid var(--cor-tabela-borda);
-        }
+.history-header {
+    background-color: var(--cor-header-tabela);
+    padding: 10px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--cor-texto);
+    border-bottom: 3px solid var(--cor-tabela-borda);
+}
 
-        /* --------------------
-         * Campo Editável e Botão de Ação
-         * -------------------- */
-        .editable-field {
-            background-color: transparent;
-            border: none;
-            color: var(--cor-texto);
-            width: 100%;
-            text-align: center;
-            padding: 5px;
-            border-radius: 4px;
-        }
-        
-        /* Estilo quando o campo está em modo de edição */
-        .editable-field.editing {
-            background-color: #ffffff;
-            outline: 1px solid var(--cor-tabela-borda);
-        }
-        
-        .action-button {
-            background: none;
-            border: none;
-            color: var(--cor-texto);
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
+.table-custom {
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--cor-tabela-borda);
+    color: var(--cor-texto);
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.table-custom thead th {
+    background-color: var(--cor-header-tabela);
+    border: none;
+    font-weight: 600;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table-custom tbody td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 12px 8px;
+}
+
+.table-custom tbody tr {
+    border-top: 1px solid var(--cor-tabela-borda);
+}
+
+.empty-message {
+    text-align: center;
+    padding: 20px;
+    color: var(--cor-texto);
+    font-style: italic;
+}

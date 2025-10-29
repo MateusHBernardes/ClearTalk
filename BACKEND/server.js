@@ -10,11 +10,12 @@ const sequelize = new Sequelize({
   logging: false
 });
 
-// ✅ INICIALIZAR MODELOS - APENAS USUÁRIOS E FEEDBACKS
+// ✅ INICIALIZAR MODELOS
 const User = require("./MODEL/User")(sequelize);
 const Feedback = require("./MODEL/Feedback")(sequelize);
+const Time = require("./MODEL/Time")(sequelize);
 
-// ✅ CONFIGURAR ASSOCIAÇÕES - SEM TIMES
+// ✅ CONFIGURAR ASSOCIAÇÕES
 User.hasMany(Feedback, { foreignKey: "gestorId", as: "FeedbacksCriados" });
 Feedback.belongsTo(User, { foreignKey: "gestorId", as: "Gestor" });
 
@@ -23,13 +24,21 @@ Feedback.belongsTo(User, { foreignKey: "funcionarioId", as: "Funcionario" });
 
 const app = express();
 
-// ✅ CONFIGURAÇÃO CORRETA DO CORS
+// ✅ CONFIGURAÇÃO CORRETA DO CORS - CORRIGIDA
 app.use(cors({
-  origin: ["http://127.0.0.1:5500", "http://localhost:5500", "http://localhost:3000"],
+  origin: true, // Permite todas as origens (para desenvolvimento)
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+// Middleware para headers CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
 
 app.use(bodyParser.json());
 
@@ -38,22 +47,43 @@ app.get("/", (req, res) => {
   res.json({ message: "✅ API ClearTalk funcionando!", status: "OK" });
 });
 
-// ✅ IMPORTAR ROTAS - SEM TIMES
+// ✅ IMPORTAR ROTAS
 const userRoutes = require("./CONTROLLER/user")(User);
 const feedbackRoutes = require("./CONTROLLER/feedback")(Feedback, User);
+const timeRoutes = require("./CONTROLLER/time")(Time);
 
 app.use("/users", userRoutes);
 app.use("/feedbacks", feedbackRoutes);
+app.use("/times", timeRoutes);
 
-// ✅ ROTA PARA BUSCAR TODOS OS USUÁRIOS
+// ✅ ROTA PARA BUSCAR TODOS OS USUÁRIOS (com filtro por setor do gestor)
 app.get("/users-all", async (req, res) => {
   try {
+    const { gestorId } = req.query;
+    
+    let whereCondition = {};
+    
+    // Se gestorId for fornecido, filtrar apenas funcionários do mesmo setor
+    if (gestorId) {
+      const gestor = await User.findByPk(gestorId);
+      if (gestor && gestor.setor) {
+        whereCondition.setor = gestor.setor;
+      }
+    }
+    
+    // Sempre filtrar apenas funcionários (cargo 'funcionario')
+    whereCondition.cargo = 'funcionario';
+    whereCondition.status = true;
+
     const users = await User.findAll({
       attributes: ['id', 'nome', 'setor', 'cargo', 'status', 'cpf'],
-      order: [['setor', 'ASC'], ['nome', 'ASC']]
+      where: whereCondition,
+      order: [['nome', 'ASC']]
     });
+    
     res.json({ success: true, data: users });
   } catch (err) {
+    console.error('Erro ao buscar usuários:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -75,6 +105,42 @@ app.get("/setores", async (req, res) => {
     res.json({ success: true, data: setoresList });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ✅ ROTA PARA VERIFICAR ACESSO DO GESTOR
+app.get("/gestor/:id/setor", async (req, res) => {
+  try {
+    const gestor = await User.findByPk(req.params.id);
+    if (!gestor) {
+      return res.status(404).json({ success: false, error: "Gestor não encontrado" });
+    }
+    
+    res.json({ success: true, data: { setor: gestor.setor } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ✅ ROTA PARA BUSCAR FEEDBACKS DE UM FUNCIONÁRIO ESPECÍFICO
+app.get("/feedbacks/funcionario/:funcionarioId", async (req, res) => {
+  try {
+    const feedbacks = await Feedback.findAll({
+      where: { 
+        funcionarioId: req.params.funcionarioId,
+        enviado: true
+      },
+      include: [
+        { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor'] },
+        { model: User, as: 'Gestor', attributes: ['id', 'nome', 'setor'] }
+      ],
+      order: [['data', 'DESC']]
+    });
+    
+    res.json({ success: true, data: feedbacks });
+  } catch (err) {
+    console.error('Erro ao buscar feedbacks do funcionário:', err);
+    res.status(500).json({ success: false, error: "Erro ao buscar feedbacks" });
   }
 });
 

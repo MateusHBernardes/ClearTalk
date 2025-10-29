@@ -9,7 +9,7 @@ module.exports = (Feedback, User) => {
       const feedbacks = await Feedback.findAll({
         include: [
           { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor'] },
-          { model: User, as: 'Gestor', attributes: ['id', 'nome'] }
+          { model: User, as: 'Gestor', attributes: ['id', 'nome', 'setor'] }
         ],
         order: [['data', 'DESC']]
       });
@@ -26,7 +26,7 @@ module.exports = (Feedback, User) => {
       const feedback = await Feedback.findByPk(req.params.id, {
         include: [
           { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor'] },
-          { model: User, as: 'Gestor', attributes: ['id', 'nome'] }
+          { model: User, as: 'Gestor', attributes: ['id', 'nome', 'setor'] }
         ]
       });
       
@@ -51,6 +51,26 @@ module.exports = (Feedback, User) => {
         return res.status(400).json({ success: false, error: "Todos os campos são obrigatórios" });
       }
       
+      // Buscar gestor e funcionário para validar setor
+      const gestor = await User.findByPk(gestorId);
+      const funcionario = await User.findByPk(funcionarioId);
+      
+      if (!gestor) {
+        return res.status(404).json({ success: false, error: "Gestor não encontrado" });
+      }
+      
+      if (!funcionario) {
+        return res.status(404).json({ success: false, error: "Funcionário não encontrado" });
+      }
+      
+      // Validar se gestor e funcionário são do mesmo setor
+      if (gestor.setor !== funcionario.setor) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Gestor só pode criar feedbacks para funcionários do mesmo setor" 
+        });
+      }
+      
       const novoFeedback = await Feedback.create({
         feedback_text,
         pontos_melhorar,
@@ -64,7 +84,7 @@ module.exports = (Feedback, User) => {
       const feedbackCompleto = await Feedback.findByPk(novoFeedback.id, {
         include: [
           { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor'] },
-          { model: User, as: 'Gestor', attributes: ['id', 'nome'] }
+          { model: User, as: 'Gestor', attributes: ['id', 'nome', 'setor'] }
         ]
       });
       
@@ -78,11 +98,32 @@ module.exports = (Feedback, User) => {
   // Rota: atualizar um feedback
   router.put("/:id", async (req, res) => {
     try {
-      const { feedback_text, pontos_melhorar, funcionarioId } = req.body;
+      const { feedback_text, pontos_melhorar, funcionarioId, gestorId } = req.body;
       const feedback = await Feedback.findByPk(req.params.id);
       
       if (!feedback) {
         return res.status(404).json({ success: false, error: "Feedback não encontrado" });
+      }
+      
+      // Validar se o gestor é o criador do feedback
+      if (feedback.gestorId !== parseInt(gestorId)) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Você só pode editar feedbacks criados por você" 
+        });
+      }
+      
+      // Se estiver alterando o funcionário, validar setor
+      if (funcionarioId && funcionarioId !== feedback.funcionarioId) {
+        const gestor = await User.findByPk(gestorId);
+        const funcionario = await User.findByPk(funcionarioId);
+        
+        if (gestor.setor !== funcionario.setor) {
+          return res.status(403).json({ 
+            success: false, 
+            error: "Gestor só pode atribuir feedbacks para funcionários do mesmo setor" 
+          });
+        }
       }
       
       // Atualizar campos
@@ -96,7 +137,7 @@ module.exports = (Feedback, User) => {
       const feedbackAtualizado = await Feedback.findByPk(feedback.id, {
         include: [
           { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor'] },
-          { model: User, as: 'Gestor', attributes: ['id', 'nome'] }
+          { model: User, as: 'Gestor', attributes: ['id', 'nome', 'setor'] }
         ]
       });
       
