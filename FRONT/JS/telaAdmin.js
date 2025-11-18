@@ -1,4 +1,4 @@
-// FRONT/JS/telaAdmin.js - VERSÃO ATUALIZADA COM STATUS NOS SETORES
+// ✅ telaAdmin.js ATUALIZADO - SISTEMA DE INATIVAÇÃO CORRIGIDO
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ telaAdmin.js carregado');
     
@@ -66,9 +66,7 @@ function setupEventListeners() {
             if (this.value === 'new') {
                 const newSector = prompt('Digite o nome do novo setor:');
                 if (newSector && newSector.trim()) {
-                    // Adiciona a nova opção ao dropdown
                     addSectorToDropdown(newSector.trim());
-                    // Seleciona o novo setor
                     this.value = newSector.trim();
                 } else {
                     this.value = '';
@@ -82,13 +80,11 @@ function setupEventListeners() {
 function addSectorToDropdown(setorName) {
     const setorSelect = document.getElementById('userSector');
     if (setorSelect) {
-        // Verificar se o setor já existe
         const existingOption = setorSelect.querySelector(`option[value="${setorName}"]`);
         if (!existingOption) {
             const option = document.createElement('option');
             option.value = setorName;
             option.textContent = setorName;
-            // Insere antes da opção "Adicionar novo setor"
             setorSelect.insertBefore(option, setorSelect.lastChild);
         }
     }
@@ -119,7 +115,6 @@ async function loadSetores() {
                     <option value="new">➕ Adicionar novo setor</option>
                 `;
                 
-                // Adicionar setores existentes
                 result.data.forEach(setor => {
                     const option = document.createElement('option');
                     option.value = setor;
@@ -152,7 +147,6 @@ function loadDefaultSetores() {
             setorSelect.appendChild(option);
         });
         
-        // Adicionar opção para novo setor
         const newOption = document.createElement('option');
         newOption.value = 'new';
         newOption.textContent = '➕ Adicionar novo setor';
@@ -183,7 +177,7 @@ async function loadUsers() {
         if (result.success) {
             console.log(`✅ ${result.data.length} usuários carregados`);
             displayUsers(result.data);
-            displaySetoresOverview(result.data); // ✅ ATUALIZADO: Mostrar visão dos setores COM STATUS
+            displaySetoresOverview(result.data);
         } else {
             console.error('❌ Erro na resposta:', result.error);
             alert('Erro ao carregar usuários: ' + result.error);
@@ -201,9 +195,24 @@ function displayUsers(users) {
         return;
     }
 
+    if (users.length === 0) {
+        usersTableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <i class="bi bi-people fs-1 text-muted"></i>
+                    <p class="mt-2 text-muted">Nenhum usuário cadastrado</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
     usersTableBody.innerHTML = users.map(user => `
-        <tr data-id="${user.id}">
-            <td>${user.nome}</td>
+        <tr data-id="${user.id}" class="${user.status ? '' : 'table-secondary'}">
+            <td>
+                ${user.nome}
+                ${!user.status ? '<br><small class="text-muted">👻 Inativo</small>' : ''}
+            </td>
             <td>${user.setor || '-'}</td>
             <td>
                 <span class="badge ${getCargoBadgeClass(user.cargo)}">
@@ -212,15 +221,15 @@ function displayUsers(users) {
             </td>
             <td>
                 <span class="badge ${user.status ? 'bg-success' : 'bg-danger'}">
-                    ${user.status ? 'Ativo' : 'Inativo'}
+                    ${user.status ? '✅ Ativo' : '❌ Inativo'}
                 </span>
                 <button class="action-button status-user-btn" onclick="toggleUserStatus(${user.id}, ${!user.status})" 
-                        title="${user.status ? 'Inativar' : 'Ativar'} Usuário"
+                        title="${user.status ? 'Inativar' : 'Reativar'} Usuário"
                         style="margin-left: 8px;">
                     <i class="bi ${user.status ? 'bi-person-check' : 'bi-person-x'}"></i>
                 </button>
             </td>
-            <td>${user.cpf}</td>
+            <td>${formatCPF(user.cpf)}</td>
             <td>
                 <button class="action-button edit-user-btn" onclick="editUser(${user.id})" title="Editar Usuário">
                     <i class="bi bi-pencil-square"></i>
@@ -230,7 +239,7 @@ function displayUsers(users) {
     `).join('');
 }
 
-// ✅ ATUALIZADO: Função para mostrar visão geral dos setores COM STATUS CENTRALIZADO
+// ✅ ATUALIZADO: Função para mostrar visão geral dos setores
 function displaySetoresOverview(users) {
     const setoresTableBody = document.getElementById('setoresTableBody');
     if (!setoresTableBody) return;
@@ -242,14 +251,18 @@ function displaySetoresOverview(users) {
         if (!setoresMap[setorKey]) {
             setoresMap[setorKey] = {
                 colaboradores: 0,
+                colaboradoresAtivos: 0,
                 gestor: '-',
-                status: 'Ativo' // Status padrão para setores
+                status: 'Ativo'
             };
         }
         setoresMap[setorKey].colaboradores++;
+        if (user.status) {
+            setoresMap[setorKey].colaboradoresAtivos++;
+        }
         
         // Encontrar gestor do setor
-        if (user.cargo === 'gestor' && user.setor === setorKey) {
+        if (user.cargo === 'gestor' && user.setor === setorKey && user.status) {
             setoresMap[setorKey].gestor = user.nome;
         }
     });
@@ -258,34 +271,24 @@ function displaySetoresOverview(users) {
         <tr>
             <td><strong>${setor}</strong></td>
             <td>
-                <span class="badge bg-info">${data.colaboradores} colaborador(es)</span>
+                <span class="badge bg-info">${data.colaboradoresAtivos} ativo(s)</span>
+                <span class="badge bg-secondary">${data.colaboradores - data.colaboradoresAtivos} inativo(s)</span>
             </td>
             <td>${data.gestor}</td>
             <td>
-                <select class="form-select status-setor" data-setor="${setor}">
-                    <option value="Ativo" ${data.status === 'Ativo' ? 'selected' : ''}>✅ Ativo</option>
-                    <option value="Inativo" ${data.status === 'Inativo' ? 'selected' : ''}>❌ Inativo</option>
-                </select>
+                <span class="badge ${data.colaboradoresAtivos > 0 ? 'bg-success' : 'bg-warning'}">
+                    ${data.colaboradoresAtivos > 0 ? '✅ Ativo' : '⚠️ Sem ativos'}
+                </span>
             </td>
         </tr>
     `).join('');
-
-    // Adicionar event listeners para os dropdowns de status dos setores
-    document.querySelectorAll('.status-setor').forEach(select => {
-        select.addEventListener('change', function() {
-            const setor = this.getAttribute('data-setor');
-            const status = this.value;
-            updateSetorStatus(setor, status);
-        });
-    });
 }
 
-// ✅ NOVA FUNÇÃO: Atualizar status do setor
-function updateSetorStatus(setorName, status) {
-    console.log(`📝 Atualizando status do setor ${setorName} para: ${status}`);
-    // Aqui você pode adicionar a lógica para salvar no backend
-    // Por enquanto, apenas mostra um alerta
-    showAlert(`Status do setor ${setorName} atualizado para ${status}`, 'success');
+// ✅ NOVA FUNÇÃO: Formatar CPF para exibição
+function formatCPF(cpf) {
+    if (!cpf) return '-';
+    const cpfStr = cpf.toString().padStart(11, '0');
+    return cpfStr.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
 // ✅ FUNÇÕES: Formatação de cargos
@@ -301,7 +304,7 @@ function formatCargo(cargo) {
 function getCargoBadgeClass(cargo) {
     const classes = {
         'admin': 'bg-danger',
-        'gestor': 'bg-warning',
+        'gestor': 'bg-warning text-dark',
         'funcionario': 'bg-info'
     };
     return classes[cargo] || 'bg-secondary';
@@ -319,7 +322,7 @@ async function editUser(userId) {
             document.getElementById('userName').value = user.nome;
             document.getElementById('userSector').value = user.setor || '';
             document.getElementById('userRole').value = user.cargo;
-            document.getElementById('userCPF').value = user.cpf;
+            document.getElementById('userCPF').value = formatCPF(user.cpf);
             
             // Adicionar ID do usuário como data attribute no formulário
             document.getElementById('userForm').setAttribute('data-editing-id', userId);
@@ -366,11 +369,15 @@ async function saveUser() {
 
         // Verificar se é edição ou criação
         const editingId = userForm.getAttribute('data-editing-id');
+        
+        // Limpar CPF (remover pontos e traços)
+        const cpfLimpo = userCPF.value.replace(/\D/g, '');
+        
         const userData = {
-            nome: userName.value,
+            nome: userName.value.trim(),
             setor: userSector.value,
             cargo: userRole.value,
-            cpf: userCPF.value,
+            cpf: cpfLimpo,
             status: true
         };
 
@@ -379,6 +386,10 @@ async function saveUser() {
         // ✅ VALIDAÇÃO BÁSICA
         if (!userData.nome || !userData.cargo || !userData.cpf) {
             throw new Error('Preencha todos os campos obrigatórios');
+        }
+
+        if (userData.cpf.length < 11) {
+            throw new Error('CPF deve ter pelo menos 11 números');
         }
 
         const url = editingId ? `http://localhost:3000/users/${editingId}` : 'http://localhost:3000/users';
@@ -402,8 +413,8 @@ async function saveUser() {
             
             // ✅ LIMPAR FORMULÁRIO E RECARREGAR DADOS
             clearUserForm();
-            await loadUsers(); // Isso também recarrega a visão dos setores
-            showAlert('✅ Usuário salvo com sucesso!', 'success');
+            await loadUsers();
+            showAlert('✅ ' + (result.message || 'Usuário salvo com sucesso!'), 'success');
             console.log('✅ Usuário salvo com sucesso:', result.data);
         } else {
             throw new Error(result.error || 'Erro desconhecido ao salvar usuário');
@@ -430,25 +441,30 @@ function clearUserForm() {
     }
 }
 
+// ✅ FUNÇÃO ATUALIZADA: Alternar status do usuário (INATIVAÇÃO/REATIVAÇÃO)
 async function toggleUserStatus(userId, newStatus) {
-    if (!confirm(`Tem certeza que deseja ${newStatus ? 'ativar' : 'inativar'} este usuário?`)) {
+    const acao = newStatus ? 'ativar' : 'inativar';
+    const confirmMessage = newStatus ? 
+        'Tem certeza que deseja reativar este usuário? Ele poderá fazer login novamente.' :
+        'Tem certeza que deseja inativar este usuário? Ele não poderá fazer login, mas permanecerá no sistema.';
+
+    if (!confirm(confirmMessage)) {
         return;
     }
 
     try {
-        const response = await fetch(`http://localhost:3000/users/${userId}`, {
-            method: 'PUT',
+        const response = await fetch(`http://localhost:3000/users/${userId}/toggle-status`, {
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ status: newStatus })
+            }
         });
 
         const result = await response.json();
 
         if (result.success) {
             loadUsers();
-            showAlert(`✅ Usuário ${newStatus ? 'ativado' : 'inativado'} com sucesso!`, 'success');
+            showAlert(`✅ ${result.message || `Usuário ${acao}do com sucesso!`}`, 'success');
         } else {
             alert('❌ Erro ao alterar status: ' + result.error);
         }
@@ -477,3 +493,25 @@ function showAlert(message, type) {
         }
     }, 5000);  
 }
+
+// Inicializa os tooltips do Bootstrap
+const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+// ✅ MASCARAR CPF NO FORMULÁRIO
+document.addEventListener('DOMContentLoaded', function() {
+    const cpfInput = document.getElementById('userCPF');
+    if (cpfInput) {
+        cpfInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length <= 11) {
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            }
+            
+            e.target.value = value;
+        });
+    }
+});

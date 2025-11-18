@@ -20,7 +20,8 @@ module.exports = (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'times'
+    tableName: 'times',
+    timestamps: true
   });
 
   return Time;

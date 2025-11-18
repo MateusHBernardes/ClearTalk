@@ -8,10 +8,18 @@ module.exports = (sequelize) => {
       autoIncrement: true 
     },
     feedback_text: { 
-      type: DataTypes.TEXT 
+      type: DataTypes.TEXT,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "Texto do feedback é obrigatório" }
+      }
     },
     pontos_melhorar: { 
-      type: DataTypes.TEXT 
+      type: DataTypes.TEXT,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: "Pontos a melhorar são obrigatórios" }
+      }
     },
     data: { 
       type: DataTypes.DATE, 
@@ -30,7 +38,8 @@ module.exports = (sequelize) => {
       allowNull: false 
     }
   }, {
-    tableName: 'feedbacks'
+    tableName: 'feedbacks',
+    timestamps: true
   });
 
   return Feedback;

@@ -106,7 +106,7 @@ module.exports = (Feedback, User) => {
       }
       
       // Validar se o gestor é o criador do feedback
-      if (feedback.gestorId !== parseInt(gestorId)) {
+      if (gestorId && feedback.gestorId !== parseInt(gestorId)) {
         return res.status(403).json({ 
           success: false, 
           error: "Você só pode editar feedbacks criados por você" 
@@ -115,7 +115,7 @@ module.exports = (Feedback, User) => {
       
       // Se estiver alterando o funcionário, validar setor
       if (funcionarioId && funcionarioId !== feedback.funcionarioId) {
-        const gestor = await User.findByPk(gestorId);
+        const gestor = await User.findByPk(gestorId || feedback.gestorId);
         const funcionario = await User.findByPk(funcionarioId);
         
         if (gestor.setor !== funcionario.setor) {
