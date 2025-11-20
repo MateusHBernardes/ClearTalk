@@ -1,4 +1,4 @@
-// ✅ telaAdmin.js ATUALIZADO - SISTEMA DE INATIVAÇÃO CORRIGIDO
+// ✅ telaAdmin.js ATUALIZADO - COM CAMPO SENHA
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ telaAdmin.js carregado');
     
@@ -323,6 +323,7 @@ async function editUser(userId) {
             document.getElementById('userSector').value = user.setor || '';
             document.getElementById('userRole').value = user.cargo;
             document.getElementById('userCPF').value = formatCPF(user.cpf);
+            document.getElementById('userSenha').value = ''; // Senha em branco para edição
             
             // Adicionar ID do usuário como data attribute no formulário
             document.getElementById('userForm').setAttribute('data-editing-id', userId);
@@ -352,9 +353,10 @@ async function saveUser() {
         const userSector = document.getElementById('userSector');
         const userRole = document.getElementById('userRole');
         const userCPF = document.getElementById('userCPF');
+        const userSenha = document.getElementById('userSenha');
         const userForm = document.getElementById('userForm');
 
-        if (!userName || !userSector || !userRole || !userCPF) {
+        if (!userName || !userSector || !userRole || !userCPF || !userSenha) {
             throw new Error('Elementos do formulário de usuário não encontrados');
         }
 
@@ -377,19 +379,34 @@ async function saveUser() {
             nome: userName.value.trim(),
             setor: userSector.value,
             cargo: userRole.value,
-            cpf: cpfLimpo,
-            status: true
+            cpf: cpfLimpo
         };
 
-        console.log('📤 Dados do usuário para salvar:', userData);
+        // ✅ VALIDAÇÃO DE SENHA (apenas para criação ou se preenchida na edição)
+        if (!editingId || userSenha.value) {
+            if (!userSenha.value) {
+                throw new Error('Senha é obrigatória para novo usuário');
+            }
+
+            if (userSenha.value.length < 5) {
+                throw new Error('Senha deve ter no mínimo 5 caracteres');
+            }
+
+            const temLetra = /[a-zA-Z]/.test(userSenha.value);
+            const temNumero = /[0-9]/.test(userSenha.value);
+            
+            if (!temLetra || !temNumero) {
+                throw new Error('Senha deve conter letras e números');
+            }
+
+            userData.senha = userSenha.value;
+        }
+
+        console.log('📤 Dados do usuário para salvar:', { ...userData, senha: '***' });
 
         // ✅ VALIDAÇÃO BÁSICA
         if (!userData.nome || !userData.cargo || !userData.cpf) {
             throw new Error('Preencha todos os campos obrigatórios');
-        }
-
-        if (userData.cpf.length < 11) {
-            throw new Error('CPF deve ter pelo menos 11 números');
         }
 
         const url = editingId ? `http://localhost:3000/users/${editingId}` : 'http://localhost:3000/users';
@@ -441,7 +458,7 @@ function clearUserForm() {
     }
 }
 
-// ✅ FUNÇÃO ATUALIZADA: Alternar status do usuário (INATIVAÇÃO/REATIVAÇÃO)
+// ✅ FUNÇÃO: Alternar status do usuário
 async function toggleUserStatus(userId, newStatus) {
     const acao = newStatus ? 'ativar' : 'inativar';
     const confirmMessage = newStatus ? 
@@ -453,7 +470,11 @@ async function toggleUserStatus(userId, newStatus) {
     }
 
     try {
-        const response = await fetch(`http://localhost:3000/users/${userId}/toggle-status`, {
+        const url = newStatus ? 
+            `http://localhost:3000/users/${userId}/reativar` : 
+            `http://localhost:3000/users/${userId}/inativar`;
+
+        const response = await fetch(url, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',

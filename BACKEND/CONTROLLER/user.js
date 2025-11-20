@@ -1,36 +1,34 @@
 const express = require("express");
 
-module.exports = (User, sequelize) => {
+module.exports = (User) => {
   const router = express.Router();
 
-  // ✅ Rota de login MELHORADA - CPF como senha
+  // ✅ Rota de login COM SENHA
   router.post("/login", async (req, res) => {
     try {
-      const { nome, cpf } = req.body;
+      const { nome, senha } = req.body;
       
-      if (!nome || !cpf) {
-        return res.status(400).json({ success: false, error: "Nome e CPF são obrigatórios" });
+      if (!nome || !senha) {
+        return res.status(400).json({ success: false, error: "Nome e senha são obrigatórios" });
       }
 
-      // Remover caracteres não numéricos do CPF para validação
-      const cpfLimpo = cpf.replace(/\D/g, '');
-      
       const user = await User.findOne({ 
         where: { 
-          nome: nome.trim(),
-          cpf: cpfLimpo
+          nome: nome.trim()
         } 
       });
       
       if (!user) {
-        return res.status(401).json({ success: false, error: "Credenciais inválidas" });
+        return res.status(401).json({ success: false, error: "Usuário não encontrado" });
+      }
+
+      // Verificar senha
+      if (user.senha !== senha) {
+        return res.status(401).json({ success: false, error: "Senha incorreta" });
       }
 
       if (!user.status) {
-        return res.status(403).json({ 
-          success: false, 
-          error: "Usuário inativo. Contate o administrador do sistema." 
-        });
+        return res.status(403).json({ success: false, error: "Usuário inativo" });
       }
 
       res.json({ 
@@ -39,8 +37,7 @@ module.exports = (User, sequelize) => {
           id: user.id,
           nome: user.nome,
           cargo: user.cargo,
-          setor: user.setor,
-          cpf: user.cpf
+          setor: user.setor
         }
       });
     } catch (err) {
@@ -49,24 +46,10 @@ module.exports = (User, sequelize) => {
     }
   });
 
-  // ✅ Rota: listar todos os usuários (INCLUINDO INATIVOS)
-  router.get("/", async (req, res) => {
-    try {
-      const users = await User.findAll({
-        attributes: ['id', 'nome', 'setor', 'cargo', 'status', 'cpf', 'createdAt', 'updatedAt'],
-        order: [['status', 'DESC'], ['nome', 'ASC']] // Ativos primeiro
-      });
-      res.json({ success: true, data: users });
-    } catch (err) {
-      console.error('Erro ao buscar usuários:', err);
-      res.status(500).json({ success: false, error: "Erro ao buscar usuários" });
-    }
-  });
-
-  // ✅ Rota: criar um novo usuário
+  // ✅ Rota: criar usuário COM VALIDAÇÃO DE SENHA
   router.post("/", async (req, res) => {
     try {
-      const { nome, cpf, cargo, setor } = req.body;
+      const { nome, cpf, cargo, setor, senha } = req.body;
       
       if (!nome || !cpf || !cargo) {
         return res.status(400).json({ 
@@ -75,27 +58,62 @@ module.exports = (User, sequelize) => {
         });
       }
 
-      // Limpar CPF (remover pontos e traços)
-      const cpfLimpo = cpf.replace(/\D/g, '');
+      // Se senha for fornecida, validar
+      let senhaFinal = '123456'; // Senha padrão
+      
+      if (senha) {
+        if (senha.length < 5) {
+          return res.status(400).json({ 
+            success: false, 
+            error: "Senha deve ter no mínimo 5 caracteres" 
+          });
+        }
+
+        const temLetra = /[a-zA-Z]/.test(senha);
+        const temNumero = /[0-9]/.test(senha);
+        
+        if (!temLetra || !temNumero) {
+          return res.status(400).json({ 
+            success: false, 
+            error: "Senha deve conter letras e números" 
+          });
+        }
+        senhaFinal = senha;
+      }
 
       const novoUser = await User.create({
         nome: nome.trim(),
-        cpf: cpfLimpo,
+        cpf: cpf,
         cargo,
         setor: setor || 'Geral',
+        senha: senhaFinal,
         status: true
       });
+
+      // Retornar dados sem a senha
+      const userSemSenha = {
+        id: novoUser.id,
+        nome: novoUser.nome,
+        cpf: novoUser.cpf,
+        cargo: novoUser.cargo,
+        setor: novoUser.setor,
+        status: novoUser.status
+      };
+      
+      const mensagem = senha ? 
+        "Usuário criado com sucesso!" :
+        "Usuário criado com sucesso! Senha padrão: 123456";
       
       res.status(201).json({ 
         success: true, 
-        data: novoUser,
-        message: "Usuário criado com sucesso! A senha é o CPF (apenas números)."
+        data: userSemSenha,
+        message: mensagem
       });
     } catch (err) {
       if (err.name === 'SequelizeUniqueConstraintError') {
         return res.status(400).json({ 
           success: false, 
-          error: "CPF já cadastrado no sistema" 
+          error: "CPF já cadastrado" 
         });
       }
       console.error('Erro ao criar usuário:', err);
@@ -107,38 +125,48 @@ module.exports = (User, sequelize) => {
     }
   });
 
-  // ✅ Rota: buscar usuário por ID
-  router.get("/:id", async (req, res) => {
-    try {
-      const user = await User.findByPk(req.params.id);
-      if (!user) return res.status(404).json({ success: false, error: "Usuário não encontrado" });
-      res.json({ success: true, data: user });
-    } catch (err) {
-      console.error('Erro ao buscar usuário:', err);
-      res.status(500).json({ success: false, error: "Erro ao buscar usuário" });
-    }
-  });
-
-  // ✅ Rota: atualizar usuário (AGORA INCLUI REATIVAÇÃO)
+  // ✅ Rota: atualizar usuário
   router.put("/:id", async (req, res) => {
     try {
       const user = await User.findByPk(req.params.id);
       if (!user) return res.status(404).json({ success: false, error: "Usuário não encontrado" });
       
-      // Se estiver atualizando CPF, limpar caracteres
-      if (req.body.cpf) {
-        req.body.cpf = req.body.cpf.replace(/\D/g, '');
+      // Se estiver atualizando senha, validar
+      if (req.body.senha) {
+        if (req.body.senha.length < 5) {
+          return res.status(400).json({ 
+            success: false, 
+            error: "Senha deve ter no mínimo 5 caracteres" 
+          });
+        }
+
+        const temLetra = /[a-zA-Z]/.test(req.body.senha);
+        const temNumero = /[0-9]/.test(req.body.senha);
+        
+        if (!temLetra || !temNumero) {
+          return res.status(400).json({ 
+            success: false, 
+            error: "Senha deve conter letras e números" 
+          });
+        }
       }
       
       await user.update(req.body);
-      
-      const acao = req.body.status !== undefined ? 
-        (req.body.status ? 'reativado' : 'inativado') : 'atualizado';
+
+      // Retornar dados sem a senha
+      const userSemSenha = {
+        id: user.id,
+        nome: user.nome,
+        cpf: user.cpf,
+        cargo: user.cargo,
+        setor: user.setor,
+        status: user.status
+      };
       
       res.json({ 
         success: true, 
-        data: user,
-        message: `Usuário ${acao} com sucesso!` 
+        data: userSemSenha,
+        message: "Usuário atualizado com sucesso!" 
       });
     } catch (err) {
       console.error('Erro ao atualizar usuário:', err);
@@ -146,7 +174,45 @@ module.exports = (User, sequelize) => {
     }
   });
 
-  // ✅ Rota: inativar usuário (NÃO EXCLUI - APENAS MARCA COMO INATIVO)
+  // ✅ Rota: listar todos os usuários (SEM SENHA)
+  router.get("/", async (req, res) => {
+    try {
+      const users = await User.findAll({
+        attributes: ['id', 'nome', 'setor', 'cargo', 'status', 'cpf', 'createdAt'],
+        order: [['nome', 'ASC']]
+      });
+      res.json({ success: true, data: users });
+    } catch (err) {
+      console.error('Erro ao buscar usuários:', err);
+      res.status(500).json({ success: false, error: "Erro ao buscar usuários" });
+    }
+  });
+
+  // ✅ Rota: buscar usuário por ID (SEM SENHA)
+  router.get("/:id", async (req, res) => {
+    try {
+      const user = await User.findByPk(req.params.id);
+      if (!user) return res.status(404).json({ success: false, error: "Usuário não encontrado" });
+      
+      // Retornar sem senha
+      const userSemSenha = {
+        id: user.id,
+        nome: user.nome,
+        cpf: user.cpf,
+        cargo: user.cargo,
+        setor: user.setor,
+        status: user.status,
+        createdAt: user.createdAt
+      };
+      
+      res.json({ success: true, data: userSemSenha });
+    } catch (err) {
+      console.error('Erro ao buscar usuário:', err);
+      res.status(500).json({ success: false, error: "Erro ao buscar usuário" });
+    }
+  });
+
+  // ✅ Rota: inativar usuário
   router.patch("/:id/inativar", async (req, res) => {
     try {
       const user = await User.findByPk(req.params.id);
@@ -156,8 +222,12 @@ module.exports = (User, sequelize) => {
       
       res.json({ 
         success: true, 
-        message: "Usuário inativado com sucesso! Ele ainda aparecerá no sistema mas não poderá fazer login.",
-        data: user
+        message: "Usuário inativado com sucesso!",
+        data: {
+          id: user.id,
+          nome: user.nome,
+          status: user.status
+        }
       });
     } catch (err) {
       console.error('Erro ao inativar usuário:', err);
@@ -175,84 +245,16 @@ module.exports = (User, sequelize) => {
       
       res.json({ 
         success: true, 
-        message: "Usuário reativado com sucesso! Ele já pode fazer login novamente.",
-        data: user
+        message: "Usuário reativado com sucesso!",
+        data: {
+          id: user.id,
+          nome: user.nome,
+          status: user.status
+        }
       });
     } catch (err) {
       console.error('Erro ao reativar usuário:', err);
       res.status(500).json({ success: false, error: "Erro ao reativar usuário" });
-    }
-  });
-
-  // ✅ Rota: alternar status do usuário (inativar/reativar)
-  router.patch("/:id/toggle-status", async (req, res) => {
-    try {
-      const user = await User.findByPk(req.params.id);
-      if (!user) return res.status(404).json({ success: false, error: "Usuário não encontrado" });
-      
-      const novoStatus = !user.status;
-      await user.update({ status: novoStatus });
-      
-      const acao = novoStatus ? 'reativado' : 'inativado';
-      
-      res.json({ 
-        success: true, 
-        message: `Usuário ${acao} com sucesso!`,
-        data: user
-      });
-    } catch (err) {
-      console.error('Erro ao alternar status:', err);
-      res.status(500).json({ success: false, error: "Erro ao alterar status do usuário" });
-    }
-  });
-
-  // ✅ Rota: Listar todos os usuários com filtros (para gestores)
-  router.get("/all/completo", async (req, res) => {
-    try {
-      const { gestorId } = req.query;
-      
-      let whereCondition = {};
-      
-      // Se gestorId for fornecido, filtrar apenas funcionários do mesmo setor
-      if (gestorId) {
-        const gestor = await User.findByPk(gestorId);
-        if (gestor && gestor.setor) {
-          whereCondition.setor = gestor.setor;
-          whereCondition.cargo = 'funcionario';
-        }
-      }
-
-      const users = await User.findAll({
-        attributes: ['id', 'nome', 'setor', 'cargo', 'status', 'cpf', 'createdAt'],
-        where: whereCondition,
-        order: [['status', 'DESC'], ['nome', 'ASC']] // Ativos primeiro
-      });
-      
-      res.json({ success: true, data: users });
-    } catch (err) {
-      console.error('Erro ao buscar usuários:', err);
-      res.status(500).json({ success: false, error: err.message });
-    }
-  });
-
-  // ✅ Rota: Listar setores únicos
-  router.get("/setores/lista", async (req, res) => {
-    try {
-      const setores = await User.findAll({
-        attributes: [[sequelize.fn('DISTINCT', sequelize.col('setor')), 'setor']],
-        where: {
-          setor: {
-            [sequelize.Op.ne]: null
-          }
-        },
-        order: [['setor', 'ASC']]
-      });
-      
-      const setoresList = setores.map(item => item.setor).filter(Boolean);
-      res.json({ success: true, data: setoresList });
-    } catch (err) {
-      console.error('Erro ao buscar setores:', err);
-      res.status(500).json({ success: false, error: err.message });
     }
   });
 

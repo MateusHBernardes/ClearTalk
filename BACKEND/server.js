@@ -61,7 +61,7 @@ app.get("/", (req, res) => {
 });
 
 // ✅ IMPORTAR ROTAS
-const userRoutes = require("./CONTROLLER/user")(User, sequelize);
+const userRoutes = require("./CONTROLLER/user")(User);
 const feedbackRoutes = require("./CONTROLLER/feedback")(Feedback, User);
 const timeRoutes = require("./CONTROLLER/time")(Time);
 
@@ -140,88 +140,80 @@ app.get("/feedbacks/funcionario/:funcionarioId", async (req, res) => {
   }
 });
 
-// ✅ SINCRONIZAR E INICIAR COM TRATAMENTO DE ERRO
+// ✅ FUNÇÃO PARA ADICIONAR COLUNA SENHA SE NÃO EXISTIR
+async function migrarBanco() {
+  try {
+    // Verificar se a coluna senha existe
+    const result = await sequelize.query(`
+      PRAGMA table_info(users);
+    `);
+    
+    const colunas = result[0];
+    const colunaSenhaExiste = colunas.some(coluna => coluna.name === 'senha');
+    
+    if (!colunaSenhaExiste) {
+      console.log('🔄 Adicionando coluna "senha" à tabela users...');
+      
+      // Adicionar coluna senha
+      await sequelize.query(`
+        ALTER TABLE users ADD COLUMN senha VARCHAR(255) DEFAULT '123456';
+      `);
+      
+      console.log('✅ Coluna "senha" adicionada com sucesso!');
+      
+      // Atualizar senha do admin existente
+      await sequelize.query(`
+        UPDATE users SET senha = 'admin123' WHERE cargo = 'admin';
+      `);
+      
+      console.log('✅ Senha do admin atualizada para "admin123"');
+    }
+  } catch (error) {
+    console.warn('⚠️ Aviso na migração:', error.message);
+  }
+}
+
+// ✅ SINCRONIZAR E INICIAR
 sequelize.authenticate()
   .then(() => {
     console.log("✅ Conectado ao banco SQLite!");
-    
-    // ✅ SINCRONIZAR SEM FORCE PARA MANTER DADOS EXISTENTES
-    return sequelize.sync({ force: false, alter: true }).catch(syncError => {
-      console.warn('⚠️ Aviso na sincronização:', syncError.message);
-      console.log('🔄 Continuando com banco existente...');
-      return Promise.resolve(); // Continua mesmo com erro
-    });
+    return migrarBanco();
+  })
+  .then(() => {
+    return sequelize.sync({ force: false });
   })
   .then(async () => {
-    try {
-      // ✅ VERIFICAR E CORRIGIR USUÁRIOS COM CPF NULL
-      const usersComCPFNull = await User.findAll({
-        where: {
-          cpf: null
-        }
+    // Criar um usuário admin padrão se não existir
+    const adminExists = await User.findOne({ where: { cargo: 'admin' } });
+    if (!adminExists) {
+      await User.create({
+        nome: 'Admin',
+        cpf: '12345678900',
+        senha: 'admin123',
+        cargo: 'admin',
+        setor: 'TI',
+        status: true
       });
-      
-      if (usersComCPFNull.length > 0) {
-        console.log(`🔄 Encontrados ${usersComCPFNull.length} usuários com CPF nulo. Corrigindo...`);
-        
-        for (const user of usersComCPFNull) {
-          // Gerar CPF temporário único baseado no ID
-          const cpfTemporario = `9999999999${user.id}`.slice(-11);
-          await user.update({ cpf: cpfTemporario });
-          console.log(`✅ Usuário ${user.nome} (ID: ${user.id}) recebeu CPF temporário: ${cpfTemporario}`);
-        }
-      }
-
-      // ✅ CRIAR USUÁRIO ADMIN PADRÃO SE NÃO EXISTIR
-      const adminExists = await User.findOne({ where: { cargo: 'admin', status: true } });
-      if (!adminExists) {
-        await User.create({
-          nome: 'Administrador Sistema',
-          cpf: '12345678900',
-          cargo: 'admin',
-          setor: 'TI',
-          status: true
-        });
-        console.log('👤 Usuário admin criado (nome: Administrador Sistema, CPF: 12345678900)');
-      }
-
-      // ✅ CRIAR USUÁRIOS DE EXEMPLO PARA TESTE
-      const usersExemplo = [
-        { nome: 'João Silva - Gestor', cpf: '11122233344', cargo: 'gestor', setor: 'TI', status: true },
-        { nome: 'Maria Santos - Funcionária', cpf: '22233344455', cargo: 'funcionario', setor: 'TI', status: true },
-        { nome: 'Pedro Oliveira - Gestor', cpf: '33344455566', cargo: 'gestor', setor: 'RH', status: true },
-        { nome: 'Ana Costa - Funcionária', cpf: '44455566677', cargo: 'funcionario', setor: 'RH', status: true },
-        { nome: 'Carlos Lima - Funcionário Inativo', cpf: '55566677788', cargo: 'funcionario', setor: 'TI', status: false }
-      ];
-
-      for (const userData of usersExemplo) {
-        const userExists = await User.findOne({ where: { cpf: userData.cpf } });
-        if (!userExists) {
-          await User.create(userData);
-          console.log(`👤 Usuário ${userData.nome} criado`);
-        }
-      }
-
-      const PORT = 3000;
-      app.listen(PORT, () => {
-        console.log(`🚀 Servidor rodando na porta ${PORT}`);
-        console.log(`📊 Acesse: http://localhost:${PORT}`);
-        console.log(`👥 Todos usuários: http://localhost:${PORT}/users-all`);
-        console.log(`📂 Setores: http://localhost:${PORT}/setores`);
-        console.log(`📝 Feedbacks: http://localhost:${PORT}/feedbacks`);
-        console.log('');
-        console.log('🔑 USUÁRIOS PARA TESTE:');
-        console.log('   Admin: nome="Administrador Sistema", CPF="12345678900"');
-        console.log('   Gestor TI: nome="João Silva - Gestor", CPF="11122233344"');
-        console.log('   Funcionário TI: nome="Maria Santos - Funcionária", CPF="22233344455"');
-        console.log('   Funcionário Inativo: nome="Carlos Lima - Funcionário Inativo", CPF="55566677788"');
-        console.log('');
-        console.log('💡 DICA: Use o CPF como senha no login (apenas números, sem pontos ou traços)');
-      });
-    } catch (initError) {
-      console.error('❌ Erro na inicialização:', initError);
+      console.log('👤 Usuário admin criado (nome: Admin, senha: admin123)');
     }
+
+    const PORT = 3000;
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
+      console.log(`📊 Acesse: http://localhost:${PORT}`);
+      console.log(`👥 Todos usuários: http://localhost:${PORT}/users-all`);
+      console.log(`📂 Setores: http://localhost:${PORT}/setores`);
+      console.log(`📝 Feedbacks: http://localhost:${PORT}/feedbacks`);
+      console.log('');
+      console.log('🔑 USUÁRIO ADMIN PARA TESTE:');
+      console.log('   Nome: Admin');
+      console.log('   Senha: admin123');
+      console.log('');
+      console.log('📝 REGRAS DA SENHA:');
+      console.log('   - Mínimo 5 caracteres');
+      console.log('   - Deve conter letras e números');
+    });
   })
   .catch(err => {
-    console.error("❌ Erro fatal:", err);
+    console.error("❌ Erro:", err);
   });
