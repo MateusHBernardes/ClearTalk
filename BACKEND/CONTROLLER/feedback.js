@@ -8,7 +8,7 @@ module.exports = (Feedback, User) => {
     try {
       const feedbacks = await Feedback.findAll({
         include: [
-          { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor'] },
+          { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor', 'status'] }, // ✅ INCLUIR STATUS
           { model: User, as: 'Gestor', attributes: ['id', 'nome', 'setor'] }
         ],
         order: [['data', 'DESC']]
@@ -25,7 +25,7 @@ module.exports = (Feedback, User) => {
     try {
       const feedback = await Feedback.findByPk(req.params.id, {
         include: [
-          { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor'] },
+          { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor', 'status'] }, // ✅ INCLUIR STATUS
           { model: User, as: 'Gestor', attributes: ['id', 'nome', 'setor'] }
         ]
       });
@@ -62,6 +62,14 @@ module.exports = (Feedback, User) => {
       if (!funcionario) {
         return res.status(404).json({ success: false, error: "Funcionário não encontrado" });
       }
+
+      // ✅ VALIDAR SE FUNCIONÁRIO ESTÁ ATIVO
+      if (!funcionario.status) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Não é possível criar feedback para funcionário inativo" 
+        });
+      }
       
       // Validar se gestor e funcionário são do mesmo setor
       if (gestor.setor !== funcionario.setor) {
@@ -83,7 +91,7 @@ module.exports = (Feedback, User) => {
       // Buscar o feedback criado com includes
       const feedbackCompleto = await Feedback.findByPk(novoFeedback.id, {
         include: [
-          { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor'] },
+          { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor', 'status'] },
           { model: User, as: 'Gestor', attributes: ['id', 'nome', 'setor'] }
         ]
       });
@@ -121,11 +129,18 @@ module.exports = (Feedback, User) => {
         });
       }
       
-      // Se estiver alterando o funcionário, validar setor
+      // Se estiver alterando o funcionário, validar setor e status
       if (funcionarioId && funcionarioId !== feedback.funcionarioId) {
         const gestor = await User.findByPk(gestorId || feedback.gestorId);
         const funcionario = await User.findByPk(funcionarioId);
         
+        if (!funcionario.status) {
+          return res.status(403).json({ 
+            success: false, 
+            error: "Não é possível atribuir feedback para funcionário inativo" 
+          });
+        }
+
         if (gestor.setor !== funcionario.setor) {
           return res.status(403).json({ 
             success: false, 
@@ -144,7 +159,7 @@ module.exports = (Feedback, User) => {
       // Buscar o feedback atualizado com includes
       const feedbackAtualizado = await Feedback.findByPk(feedback.id, {
         include: [
-          { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor'] },
+          { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor', 'status'] },
           { model: User, as: 'Gestor', attributes: ['id', 'nome', 'setor'] }
         ]
       });
@@ -195,6 +210,15 @@ module.exports = (Feedback, User) => {
         return res.status(403).json({ 
           success: false, 
           error: "Este feedback já foi enviado" 
+        });
+      }
+
+      // ✅ VERIFICAR SE O FUNCIONÁRIO AINDA ESTÁ ATIVO
+      const funcionario = await User.findByPk(feedback.funcionarioId);
+      if (!funcionario || !funcionario.status) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Não é possível enviar feedback para funcionário inativo" 
         });
       }
       

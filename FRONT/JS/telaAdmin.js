@@ -611,9 +611,10 @@ async function toggleUserStatus(userId, newStatus) {
 
 // ========== FUNÇÕES UTILITÁRIAS ==========
 
+// ✅ FUNÇÃO: Mostrar alerta (CORRIGIDA)
 function showAlert(message, type) {
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
     alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
     alertDiv.innerHTML = `
         ${message}
@@ -626,7 +627,7 @@ function showAlert(message, type) {
         if (alertDiv.parentNode) {
             alertDiv.remove();
         }
-    }, 5000);  
+    }, 5000);
 }
 
 // Inicializa os tooltips do Bootstrap

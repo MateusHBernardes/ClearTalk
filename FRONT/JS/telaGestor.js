@@ -1,4 +1,4 @@
-// FRONTEND/JS/telaGestor.js - COM BLOQUEIO APÓS ENVIO DE FEEDBACK
+// FRONTEND/JS/telaGestor.js - COM BLOQUEIO APÓS ENVIO DE FEEDBACK E VALIDAÇÃO DE USUÁRIOS ATIVOS
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ telaGestor.js carregado');
     
@@ -42,7 +42,7 @@ async function inicializarSistema() {
     // Configurar data atual
     configurarDataAtual();
     
-    // Carregar funcionários do mesmo setor
+    // Carregar funcionários do mesmo setor (SOMENTE ATIVOS)
     await carregarFuncionarios();
     
     // Carregar histórico de feedbacks do gestor
@@ -80,10 +80,11 @@ async function carregarFuncionarios() {
             const funcionarios = result.data;
             
             if (funcionarios.length === 0) {
-                funcionarioSelect.innerHTML = '<option value="">Nenhum funcionário encontrado no seu setor</option>';
-                console.log('ℹ️ Nenhum funcionário encontrado no setor:', window.gestorSetor);
+                funcionarioSelect.innerHTML = '<option value="">Nenhum funcionário ativo encontrado no seu setor</option>';
+                console.log('ℹ️ Nenhum funcionário ativo encontrado no setor:', window.gestorSetor);
             } else {
                 funcionarios.forEach(funcionario => {
+                    // ✅ APENAS FUNCIONÁRIOS ATIVOS SÃO CARREGADOS
                     const option = document.createElement('option');
                     option.value = funcionario.id;
                     option.textContent = `${funcionario.nome} - ${funcionario.setor}`;
@@ -91,7 +92,7 @@ async function carregarFuncionarios() {
                     funcionarioSelect.appendChild(option);
                 });
                 
-                console.log(`✅ ${funcionarios.length} funcionários carregados do setor ${window.gestorSetor}`);
+                console.log(`✅ ${funcionarios.length} funcionários ativos carregados do setor ${window.gestorSetor}`);
             }
         } else {
             console.error('❌ Erro na resposta:', result.error);
@@ -99,6 +100,7 @@ async function carregarFuncionarios() {
         }
     } catch (error) {
         console.error('❌ Erro ao carregar funcionários:', error);
+        handleApiError(error, 'Erro ao carregar funcionários');
         carregarFuncionariosExemplo();
     }
 }
@@ -106,12 +108,14 @@ async function carregarFuncionarios() {
 function carregarFuncionariosExemplo() {
     const funcionarioSelect = document.getElementById('funcionarioSelect');
     
-    // Exemplo baseado no setor do gestor
+    // Exemplo baseado no setor do gestor (SOMENTE ATIVOS)
     const funcionariosExemplo = [
-        { id: 1, nome: 'João Silva', setor: window.gestorSetor },
-        { id: 2, nome: 'Maria Santos', setor: window.gestorSetor },
-        { id: 3, nome: 'Pedro Oliveira', setor: window.gestorSetor }
+        { id: 1, nome: 'João Silva', setor: window.gestorSetor, status: true },
+        { id: 2, nome: 'Maria Santos', setor: window.gestorSetor, status: true },
+        { id: 3, nome: 'Pedro Oliveira', setor: window.gestorSetor, status: true }
     ];
+    
+    funcionarioSelect.innerHTML = '<option value="">Selecione um funcionário</option>';
     
     funcionariosExemplo.forEach(funcionario => {
         const option = document.createElement('option');
@@ -149,11 +153,12 @@ async function carregarHistoricos() {
         }
     } catch (error) {
         console.error('❌ Erro ao carregar feedbacks:', error);
+        handleApiError(error, 'Erro ao carregar feedbacks');
         carregarFeedbacksExemplo();
     }
 }
 
-// ✅ ATUALIZADO: Exibir feedbacks com bloqueio de ações após envio
+// ✅ ATUALIZADO: Exibir feedbacks com bloqueio TOTAL de ações após envio
 function exibirFeedbacks(feedbacks) {
     const historyTableBody = document.getElementById('historyTableBody');
     
@@ -170,7 +175,7 @@ function exibirFeedbacks(feedbacks) {
     }
     
     historyTableBody.innerHTML = feedbacks.map(feedback => `
-        <tr data-id="${feedback.id}">
+        <tr data-id="${feedback.id}" class="${feedback.enviado ? 'table-success' : ''}">
             <td><strong>${feedback.Funcionario ? feedback.Funcionario.nome : 'N/A'}</strong></td>
             <td>${feedback.Funcionario ? feedback.Funcionario.setor : 'N/A'}</td>
             <td>
@@ -186,21 +191,25 @@ function exibirFeedbacks(feedbacks) {
                 </span>
             </td>
             <td>
-                <button class="action-button edit-btn" onclick="editarFeedback(${feedback.id})" 
-                        title="${feedback.enviado ? 'Feedback enviado - não pode editar' : 'Editar Feedback'}"
-                        ${feedback.enviado ? 'disabled' : ''}>
-                    <i class="bi bi-pencil-square"></i>
-                </button>
-                <button class="action-button send-btn" onclick="prepararEnvio(${feedback.id})" 
-                        title="${feedback.enviado ? 'Feedback já enviado' : 'Enviar para Funcionário'}"
-                        ${feedback.enviado ? 'disabled' : ''}>
-                    <i class="bi bi-send"></i>
-                </button>
-                <button class="action-button delete-btn" onclick="excluirFeedback(${feedback.id})" 
-                        title="${feedback.enviado ? 'Feedback enviado - não pode excluir' : 'Excluir Feedback'}"
-                        ${feedback.enviado ? 'disabled' : ''}>
-                    <i class="bi bi-trash"></i>
-                </button>
+                ${feedback.enviado ? 
+                    // ✅ FEEDBACK ENVIADO: SEM AÇÕES
+                    `<span class="text-muted small">Ações bloqueadas</span>` :
+                    // ✅ FEEDBACK NÃO ENVIADO: COM AÇÕES
+                    `
+                    <button class="action-button edit-btn" onclick="editarFeedback(${feedback.id})" 
+                            title="Editar Feedback">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button class="action-button send-btn" onclick="prepararEnvio(${feedback.id})" 
+                            title="Enviar para Funcionário">
+                        <i class="bi bi-send"></i>
+                    </button>
+                    <button class="action-button delete-btn" onclick="excluirFeedback(${feedback.id})" 
+                            title="Excluir Feedback">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    `
+                }
             </td>
         </tr>
     `).join('');
@@ -210,7 +219,7 @@ function carregarFeedbacksExemplo() {
     const feedbacksExemplo = [
         {
             id: 1,
-            Funcionario: { nome: 'João Silva', setor: window.gestorSetor },
+            Funcionario: { nome: 'João Silva', setor: window.gestorSetor, status: true },
             feedback_text: 'Excelente desempenho no projeto do sistema novo.',
             pontos_melhorar: 'Melhorar a documentação do código.',
             data: new Date(),
@@ -219,7 +228,7 @@ function carregarFeedbacksExemplo() {
         },
         {
             id: 2,
-            Funcionario: { nome: 'Maria Santos', setor: window.gestorSetor },
+            Funcionario: { nome: 'Maria Santos', setor: window.gestorSetor, status: true },
             feedback_text: 'Bom relacionamento com os clientes.',
             pontos_melhorar: 'Aumentar o fechamento de vendas.',
             data: new Date(),
@@ -501,4 +510,15 @@ function mostrarAlerta(mensagem, tipo) {
             alertDiv.remove();
         }
     }, 5000);
+}
+
+// ✅ FUNÇÃO: Tratamento de erros de API
+function handleApiError(error, defaultMessage = 'Erro de conexão') {
+    console.error('❌ Erro API:', error);
+    
+    if (error.message.includes('Failed to fetch')) {
+        mostrarAlerta('❌ Servidor offline. Verifique se o backend está rodando na porta 3000.', 'danger');
+    } else {
+        mostrarAlerta(`❌ ${defaultMessage}: ${error.message}`, 'danger');
+    }
 }

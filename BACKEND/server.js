@@ -40,7 +40,7 @@ const app = express();
 
 // ✅ CONFIGURAÇÃO CORRETA DO CORS
 app.use(cors({
-  origin: true,
+  origin: ['http://localhost', 'http://127.0.0.1', 'http://localhost:5500', 'http://127.0.0.1:5500'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -53,6 +53,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.options('*', cors());
 app.use(bodyParser.json());
 
 // ✅ ROTA DE TESTE
@@ -74,7 +75,7 @@ app.get("/users-all", async (req, res) => {
   try {
     const { gestorId } = req.query;
     
-    let whereCondition = {};
+    let whereCondition = { status: true }; // ✅ SOMENTE USUÁRIOS ATIVOS
     
     // Se gestorId for fornecido, filtrar apenas funcionários do mesmo setor
     if (gestorId) {
@@ -127,8 +128,16 @@ app.get("/feedbacks/funcionario/:funcionarioId", async (req, res) => {
         enviado: true
       },
       include: [
-        { model: User, as: 'Funcionario', attributes: ['id', 'nome', 'setor'] },
-        { model: User, as: 'Gestor', attributes: ['id', 'nome', 'setor'] }
+        { 
+          model: User, 
+          as: 'Funcionario', 
+          attributes: ['id', 'nome', 'setor'] 
+        },
+        { 
+          model: User, 
+          as: 'Gestor', 
+          attributes: ['id', 'nome', 'setor'] 
+        }
       ],
       order: [['data', 'DESC']]
     });
@@ -208,7 +217,7 @@ sequelize.authenticate()
     return migrarBanco();
   })
   .then(() => {
-    return garantirUnicidadeCPF(); // ✅ ADICIONAR ESTA LINHA
+    return garantirUnicidadeCPF();
   })
   .then(() => {
     return sequelize.sync({ force: false });
