@@ -1,4 +1,4 @@
-// ✅ telaAdmin.js ATUALIZADO - COM CAMPO SENHA
+// ✅ telaAdmin.js ATUALIZADO - SENHA OBRIGATÓRIA APENAS NO CADASTRO E CPF ÚNICO
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ telaAdmin.js carregado');
     
@@ -73,6 +73,12 @@ function setupEventListeners() {
                 }
             }
         });
+    }
+
+    // ✅ REMOVER ATRIBUTO REQUIRED DO CAMPO SENHA INICIALMENTE
+    const userSenha = document.getElementById('userSenha');
+    if (userSenha) {
+        userSenha.removeAttribute('required');
     }
 }
 
@@ -239,7 +245,7 @@ function displayUsers(users) {
     `).join('');
 }
 
-// ✅ ATUALIZADO: Função para mostrar visão geral dos setores
+// ✅ ATUALIZADO: Função para mostrar visão simplificada dos setores (SEM STATUS)
 function displaySetoresOverview(users) {
     const setoresTableBody = document.getElementById('setoresTableBody');
     if (!setoresTableBody) return;
@@ -251,15 +257,10 @@ function displaySetoresOverview(users) {
         if (!setoresMap[setorKey]) {
             setoresMap[setorKey] = {
                 colaboradores: 0,
-                colaboradoresAtivos: 0,
-                gestor: '-',
-                status: 'Ativo'
+                gestor: '-'
             };
         }
         setoresMap[setorKey].colaboradores++;
-        if (user.status) {
-            setoresMap[setorKey].colaboradoresAtivos++;
-        }
         
         // Encontrar gestor do setor
         if (user.cargo === 'gestor' && user.setor === setorKey && user.status) {
@@ -271,17 +272,69 @@ function displaySetoresOverview(users) {
         <tr>
             <td><strong>${setor}</strong></td>
             <td>
-                <span class="badge bg-info">${data.colaboradoresAtivos} ativo(s)</span>
-                <span class="badge bg-secondary">${data.colaboradores - data.colaboradoresAtivos} inativo(s)</span>
+                <span class="badge bg-info">${data.colaboradores} colaborador(es)</span>
             </td>
             <td>${data.gestor}</td>
-            <td>
-                <span class="badge ${data.colaboradoresAtivos > 0 ? 'bg-success' : 'bg-warning'}">
-                    ${data.colaboradoresAtivos > 0 ? '✅ Ativo' : '⚠️ Sem ativos'}
-                </span>
-            </td>
         </tr>
     `).join('');
+}
+
+// ✅ FUNÇÃO: Validar CPF no frontend
+function validarCPF(cpf) {
+    cpf = cpf.replace(/\D/g, '');
+    
+    if (cpf.length !== 11) return false;
+    if (/^(\d)\1+$/.test(cpf)) return false;
+    
+    let soma = 0;
+    for (let i = 0; i < 9; i++) {
+        soma += parseInt(cpf.charAt(i)) * (10 - i);
+    }
+    let resto = soma % 11;
+    let digito1 = resto < 2 ? 0 : 11 - resto;
+    
+    if (digito1 !== parseInt(cpf.charAt(9))) return false;
+    
+    soma = 0;
+    for (let i = 0; i < 10; i++) {
+        soma += parseInt(cpf.charAt(i)) * (11 - i);
+    }
+    resto = soma % 11;
+    let digito2 = resto < 2 ? 0 : 11 - resto;
+    
+    return digito2 === parseInt(cpf.charAt(10));
+}
+
+// ✅ FUNÇÃO: Verificar se CPF já existe no sistema
+async function verificarCPFExistente(cpf, userId = null) {
+    try {
+        const cpfLimpo = cpf.replace(/\D/g, '');
+        
+        // Buscar todos os usuários
+        const response = await fetch('http://localhost:3000/users-all');
+        const result = await response.json();
+        
+        if (result.success) {
+            const usuarioComCPF = result.data.find(user => {
+                const userCPFLimpo = user.cpf.toString().replace(/\D/g, '');
+                const mesmoCPF = userCPFLimpo === cpfLimpo;
+                const mesmoUsuario = userId && user.id === parseInt(userId);
+                
+                // Se for edição, ignorar o próprio usuário
+                if (userId && mesmoUsuario) {
+                    return false;
+                }
+                
+                return mesmoCPF;
+            });
+            
+            return !!usuarioComCPF;
+        }
+        return false;
+    } catch (error) {
+        console.error('Erro ao verificar CPF:', error);
+        return false;
+    }
 }
 
 // ✅ NOVA FUNÇÃO: Formatar CPF para exibição
@@ -323,7 +376,19 @@ async function editUser(userId) {
             document.getElementById('userSector').value = user.setor || '';
             document.getElementById('userRole').value = user.cargo;
             document.getElementById('userCPF').value = formatCPF(user.cpf);
-            document.getElementById('userSenha').value = ''; // Senha em branco para edição
+            document.getElementById('userSenha').value = ''; // ✅ SENHA EM BRANCO - NÃO OBRIGATÓRIA
+            document.getElementById('userSenha').placeholder = 'Deixe em branco para manter a senha atual';
+            
+            // ✅ REMOVER OBRIGATORIEDADE VISUAL DO CAMPO SENHA NA EDIÇÃO
+            const userSenha = document.getElementById('userSenha');
+            if (userSenha) {
+                userSenha.removeAttribute('required');
+            }
+            
+            const senhaLabel = document.querySelector('label[for="userSenha"]');
+            if (senhaLabel) {
+                senhaLabel.innerHTML = 'SENHA <small class="text-muted">(Opcional - deixe em branco para manter a atual)</small>';
+            }
             
             // Adicionar ID do usuário como data attribute no formulário
             document.getElementById('userForm').setAttribute('data-editing-id', userId);
@@ -375,6 +440,17 @@ async function saveUser() {
         // Limpar CPF (remover pontos e traços)
         const cpfLimpo = userCPF.value.replace(/\D/g, '');
         
+        // ✅ VALIDAR CPF
+        if (!validarCPF(cpfLimpo)) {
+            throw new Error('CPF inválido');
+        }
+
+        // ✅ VERIFICAR SE CPF JÁ EXISTE NO SISTEMA
+        const cpfExistente = await verificarCPFExistente(cpfLimpo, editingId);
+        if (cpfExistente) {
+            throw new Error('CPF já cadastrado no sistema');
+        }
+        
         const userData = {
             nome: userName.value.trim(),
             setor: userSector.value,
@@ -382,9 +458,10 @@ async function saveUser() {
             cpf: cpfLimpo
         };
 
-        // ✅ VALIDAÇÃO DE SENHA (apenas para criação ou se preenchida na edição)
-        if (!editingId || userSenha.value) {
-            if (!userSenha.value) {
+        // ✅ VALIDAÇÃO DE SENHA (OBRIGATÓRIA APENAS PARA CRIAÇÃO)
+        if (!editingId) {
+            // ✅ CADASTRO: Senha obrigatória
+            if (!userSenha.value || userSenha.value.trim() === '') {
                 throw new Error('Senha é obrigatória para novo usuário');
             }
 
@@ -400,9 +477,30 @@ async function saveUser() {
             }
 
             userData.senha = userSenha.value;
+        } else {
+            // ✅ EDIÇÃO: Senha opcional - apenas valida se for preenchida
+            if (userSenha.value && userSenha.value.trim() !== '') {
+                if (userSenha.value.length < 5) {
+                    throw new Error('Senha deve ter no mínimo 5 caracteres');
+                }
+
+                const temLetra = /[a-zA-Z]/.test(userSenha.value);
+                const temNumero = /[0-9]/.test(userSenha.value);
+                
+                if (!temLetra || !temNumero) {
+                    throw new Error('Senha deve conter letras e números');
+                }
+
+                userData.senha = userSenha.value;
+            }
+            // Se senha estiver vazia, não enviar (manter senha atual)
         }
 
-        console.log('📤 Dados do usuário para salvar:', { ...userData, senha: '***' });
+        console.log('📤 Dados do usuário para salvar:', { 
+            ...userData, 
+            senha: userData.senha ? '***' : '(mantida)',
+            operacao: editingId ? 'EDIÇÃO' : 'CADASTRO'
+        });
 
         // ✅ VALIDAÇÃO BÁSICA
         if (!userData.nome || !userData.cargo || !userData.cpf) {
@@ -449,12 +547,28 @@ function clearUserForm() {
         userForm.reset();
         userForm.removeAttribute('data-editing-id');
         
+        // ✅ RESTAURAR PLACEHOLDER E LABEL PARA CADASTRO
+        const userSenha = document.getElementById('userSenha');
+        if (userSenha) {
+            userSenha.placeholder = 'Senha (mínimo 5 caracteres com letras e números)';
+            // ✅ ADICIONAR REQUIRED APENAS NO CADASTRO
+            userSenha.setAttribute('required', 'required');
+        }
+        
+        // ✅ RESTAURAR LABEL ORIGINAL
+        const senhaLabel = document.querySelector('label[for="userSenha"]');
+        if (senhaLabel) {
+            senhaLabel.innerHTML = 'SENHA <small class="text-muted">(Obrigatória para novo usuário)</small>';
+        }
+        
         const submitBtn = userForm.querySelector('button[type="submit"]');
         if (submitBtn) {
             submitBtn.textContent = 'SALVAR USUÁRIO';
             submitBtn.classList.remove('btn-warning');
             submitBtn.classList.add('btn-salvar');
         }
+        
+        console.log('✅ Formulário limpo e preparado para novo cadastro');
     }
 }
 
@@ -499,7 +613,7 @@ async function toggleUserStatus(userId, newStatus) {
 
 function showAlert(message, type) {
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
     alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
     alertDiv.innerHTML = `
         ${message}

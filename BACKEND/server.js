@@ -173,11 +173,42 @@ async function migrarBanco() {
   }
 }
 
+// ✅ FUNÇÃO PARA GARANTIR UNICIDADE DO CPF
+async function garantirUnicidadeCPF() {
+    try {
+        // Verificar se a constraint única já existe
+        const result = await sequelize.query(`
+            PRAGMA index_list(users);
+        `);
+        
+        const indices = result[0];
+        const indiceCPFExiste = indices.some(indice => 
+            indice.name === 'users_cpf' || indice.name.includes('cpf')
+        );
+        
+        if (!indiceCPFExiste) {
+            console.log('🔄 Criando índice único para CPF...');
+            
+            // Criar índice único para CPF
+            await sequelize.query(`
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_users_cpf_unique ON users(cpf);
+            `);
+            
+            console.log('✅ Índice único para CPF criado com sucesso!');
+        }
+    } catch (error) {
+        console.warn('⚠️ Aviso na criação do índice único:', error.message);
+    }
+}
+
 // ✅ SINCRONIZAR E INICIAR
 sequelize.authenticate()
   .then(() => {
     console.log("✅ Conectado ao banco SQLite!");
     return migrarBanco();
+  })
+  .then(() => {
+    return garantirUnicidadeCPF(); // ✅ ADICIONAR ESTA LINHA
   })
   .then(() => {
     return sequelize.sync({ force: false });

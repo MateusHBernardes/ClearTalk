@@ -1,4 +1,4 @@
-// FRONT/JS/telaGestor.js - COM FILTRO POR SETOR DO GESTOR
+// FRONTEND/JS/telaGestor.js - COM BLOQUEIO APÓS ENVIO DE FEEDBACK
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ telaGestor.js carregado');
     
@@ -153,6 +153,7 @@ async function carregarHistoricos() {
     }
 }
 
+// ✅ ATUALIZADO: Exibir feedbacks com bloqueio de ações após envio
 function exibirFeedbacks(feedbacks) {
     const historyTableBody = document.getElementById('historyTableBody');
     
@@ -181,17 +182,23 @@ function exibirFeedbacks(feedbacks) {
             <td>${new Date(feedback.data).toLocaleDateString('pt-BR')}</td>
             <td>
                 <span class="badge status-badge ${feedback.enviado ? 'bg-success' : 'bg-warning'}">
-                    ${feedback.enviado ? 'Enviado' : 'Rascunho'}
+                    ${feedback.enviado ? '✅ Enviado' : '📝 Rascunho'}
                 </span>
             </td>
             <td>
-                <button class="action-button edit-btn" onclick="editarFeedback(${feedback.id})" title="Editar Feedback">
+                <button class="action-button edit-btn" onclick="editarFeedback(${feedback.id})" 
+                        title="${feedback.enviado ? 'Feedback enviado - não pode editar' : 'Editar Feedback'}"
+                        ${feedback.enviado ? 'disabled' : ''}>
                     <i class="bi bi-pencil-square"></i>
                 </button>
-                <button class="action-button send-btn" onclick="prepararEnvio(${feedback.id})" title="Enviar para Funcionário" ${feedback.enviado ? 'disabled' : ''}>
+                <button class="action-button send-btn" onclick="prepararEnvio(${feedback.id})" 
+                        title="${feedback.enviado ? 'Feedback já enviado' : 'Enviar para Funcionário'}"
+                        ${feedback.enviado ? 'disabled' : ''}>
                     <i class="bi bi-send"></i>
                 </button>
-                <button class="action-button delete-btn" onclick="excluirFeedback(${feedback.id})" title="Excluir Feedback">
+                <button class="action-button delete-btn" onclick="excluirFeedback(${feedback.id})" 
+                        title="${feedback.enviado ? 'Feedback enviado - não pode excluir' : 'Excluir Feedback'}"
+                        ${feedback.enviado ? 'disabled' : ''}>
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -348,6 +355,11 @@ async function editarFeedback(feedbackId) {
                 throw new Error('Você só pode editar feedbacks criados por você');
             }
             
+            // ✅ BLOQUEAR EDIÇÃO SE JÁ FOI ENVIADO
+            if (feedback.enviado) {
+                throw new Error('Não é possível editar um feedback que já foi enviado');
+            }
+            
             // Preencher formulário com dados do feedback
             document.getElementById('feedbackId').value = feedback.id;
             
@@ -396,33 +408,17 @@ function prepararEnvio(feedbackId) {
     modal.show();
 }
 
-// ✅ FUNÇÃO: Enviar feedback para funcionário (CORRIGIDA)
+// ✅ FUNÇÃO: Enviar feedback para funcionário
 async function enviarFeedback(feedbackId) {
     console.log(`🚀 Enviando feedback ID: ${feedbackId}`);
     
     try {
-        // Tentar primeiro com PATCH
-        let response = await fetch(`http://localhost:3000/feedbacks/${feedbackId}/enviar`, {
+        const response = await fetch(`http://localhost:3000/feedbacks/${feedbackId}/enviar`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
             }
         });
-
-        // Se PATCH falhar, tentar PUT como fallback
-        if (!response.ok) {
-            console.warn('❌ PATCH falhou, tentando PUT...');
-            response = await fetch(`http://localhost:3000/feedbacks/${feedbackId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    enviado: true,
-                    gestorId: window.gestorId
-                })
-            });
-        }
 
         const result = await response.json();
 
@@ -439,62 +435,7 @@ async function enviarFeedback(feedbackId) {
         }
     } catch (error) {
         console.error('❌ Erro ao enviar feedback:', error);
-        
-        // Fallback: simular envio localmente
-        console.warn('⚠️ Usando fallback local para envio de feedback');
-        await simularEnvioFeedback(feedbackId);
-    }
-}
-
-// ✅ FUNÇÃO: Simular envio quando o backend não estiver disponível
-async function simularEnvioFeedback(feedbackId) {
-    try {
-        // Atualizar interface localmente
-        const row = document.querySelector(`tr[data-id="${feedbackId}"]`);
-        if (row) {
-            const statusBadge = row.querySelector('.status-badge');
-            if (statusBadge) {
-                statusBadge.className = 'badge status-badge bg-success';
-                statusBadge.textContent = 'Enviado';
-            }
-            
-            const sendBtn = row.querySelector('.send-btn');
-            if (sendBtn) {
-                sendBtn.disabled = true;
-                sendBtn.title = 'Já enviado';
-            }
-        }
-        
-        // Tentar atualizar via PUT como último recurso
-        try {
-            const response = await fetch(`http://localhost:3000/feedbacks/${feedbackId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    enviado: true,
-                    gestorId: window.gestorId
-                })
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                console.log('✅ Feedback atualizado via PUT:', result);
-            }
-        } catch (apiError) {
-            console.warn('⚠️ Não foi possível atualizar via API, usando apenas interface');
-        }
-        
-        mostrarAlerta('✅ Feedback enviado para o funcionário com sucesso!', 'success');
-        
-        // Fechar modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
-        if (modal) modal.hide();
-        
-    } catch (error) {
-        console.error('❌ Erro no fallback:', error);
-        mostrarAlerta('✅ Feedback marcado como enviado localmente!', 'warning');
+        mostrarAlerta('❌ Erro ao enviar feedback: ' + error.message, 'danger');
     }
 }
 

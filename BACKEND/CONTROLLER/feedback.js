@@ -95,7 +95,7 @@ module.exports = (Feedback, User) => {
     }
   });
 
-  // Rota: atualizar um feedback
+  // ✅ Rota: atualizar um feedback (BLOQUEAR SE JÁ ENVIADO)
   router.put("/:id", async (req, res) => {
     try {
       const { feedback_text, pontos_melhorar, funcionarioId, gestorId } = req.body;
@@ -103,6 +103,14 @@ module.exports = (Feedback, User) => {
       
       if (!feedback) {
         return res.status(404).json({ success: false, error: "Feedback não encontrado" });
+      }
+      
+      // ✅ BLOQUEAR EDIÇÃO SE FEEDBACK JÁ FOI ENVIADO
+      if (feedback.enviado) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Não é possível editar um feedback que já foi enviado" 
+        });
       }
       
       // Validar se o gestor é o criador do feedback
@@ -148,13 +156,21 @@ module.exports = (Feedback, User) => {
     }
   });
 
-  // Rota: excluir um feedback
+  // ✅ Rota: excluir um feedback (BLOQUEAR SE JÁ ENVIADO)
   router.delete("/:id", async (req, res) => {
     try {
       const feedback = await Feedback.findByPk(req.params.id);
       
       if (!feedback) {
         return res.status(404).json({ success: false, error: "Feedback não encontrado" });
+      }
+      
+      // ✅ BLOQUEAR EXCLUSÃO SE FEEDBACK JÁ FOI ENVIADO
+      if (feedback.enviado) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Não é possível excluir um feedback que já foi enviado" 
+        });
       }
       
       await feedback.destroy();
@@ -165,7 +181,7 @@ module.exports = (Feedback, User) => {
     }
   });
 
-  // Rota: enviar feedback (marcar como enviado)
+  // ✅ Rota: enviar feedback (marcar como enviado)
   router.patch("/:id/enviar", async (req, res) => {
     try {
       const feedback = await Feedback.findByPk(req.params.id);
@@ -174,10 +190,22 @@ module.exports = (Feedback, User) => {
         return res.status(404).json({ success: false, error: "Feedback não encontrado" });
       }
       
+      // ✅ BLOQUEAR REENVIO SE JÁ FOI ENVIADO
+      if (feedback.enviado) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Este feedback já foi enviado" 
+        });
+      }
+      
       feedback.enviado = true;
       await feedback.save();
       
-      res.json({ success: true, message: "Feedback enviado com sucesso" });
+      res.json({ 
+        success: true, 
+        message: "Feedback enviado com sucesso!",
+        data: feedback
+      });
     } catch (err) {
       console.error('Erro ao enviar feedback:', err);
       res.status(500).json({ success: false, error: "Erro ao enviar feedback" });

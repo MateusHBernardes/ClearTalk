@@ -3,7 +3,44 @@ const express = require("express");
 module.exports = (User) => {
   const router = express.Router();
 
-  // ✅ Rota de login COM SENHA
+  // ✅ FUNÇÃO: Validar CPF CORRIGIDA
+  function validarCPF(cpf) {
+    cpf = cpf.replace(/\D/g, '');
+    
+    // Verificar tamanho
+    if (cpf.length !== 11) {
+      return false;
+    }
+    
+    // Verificar se todos os dígitos são iguais
+    if (/^(\d)\1+$/.test(cpf)) {
+      return false;
+    }
+    
+    // Validar primeiro dígito verificador
+    let soma = 0;
+    for (let i = 0; i < 9; i++) {
+      soma += parseInt(cpf.charAt(i)) * (10 - i);
+    }
+    let resto = soma % 11;
+    let digito1 = resto < 2 ? 0 : 11 - resto;
+    
+    if (digito1 !== parseInt(cpf.charAt(9))) {
+      return false;
+    }
+    
+    // Validar segundo dígito verificador
+    soma = 0;
+    for (let i = 0; i < 10; i++) {
+      soma += parseInt(cpf.charAt(i)) * (11 - i);
+    }
+    resto = soma % 11;
+    let digito2 = resto < 2 ? 0 : 11 - resto;
+    
+    return digito2 === parseInt(cpf.charAt(10));
+  }
+
+  // ✅ Rota de login
   router.post("/login", async (req, res) => {
     try {
       const { nome, senha } = req.body;
@@ -46,7 +83,7 @@ module.exports = (User) => {
     }
   });
 
-  // ✅ Rota: criar usuário COM VALIDAÇÃO DE SENHA
+  // ✅ Rota: criar usuário COM VALIDAÇÃO DE CPF ÚNICO
   router.post("/", async (req, res) => {
     try {
       const { nome, cpf, cargo, setor, senha } = req.body;
@@ -55,6 +92,27 @@ module.exports = (User) => {
         return res.status(400).json({ 
           success: false, 
           error: "Campos obrigatórios: nome, CPF e cargo" 
+        });
+      }
+
+      // ✅ VALIDAR CPF - CORRIGIDO
+      const cpfLimpo = cpf.replace(/\D/g, '');
+      if (!validarCPF(cpfLimpo)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "CPF inválido" 
+        });
+      }
+
+      // ✅ VERIFICAR SE CPF JÁ EXISTE (CADASTRO)
+      const cpfExistente = await User.findOne({
+        where: { cpf: cpfLimpo }
+      });
+
+      if (cpfExistente) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "CPF já cadastrado no sistema" 
         });
       }
 
@@ -83,7 +141,7 @@ module.exports = (User) => {
 
       const novoUser = await User.create({
         nome: nome.trim(),
-        cpf: cpf,
+        cpf: cpfLimpo, // Salvar CPF limpo
         cargo,
         setor: setor || 'Geral',
         senha: senhaFinal,
@@ -113,7 +171,7 @@ module.exports = (User) => {
       if (err.name === 'SequelizeUniqueConstraintError') {
         return res.status(400).json({ 
           success: false, 
-          error: "CPF já cadastrado" 
+          error: "CPF já cadastrado no sistema" 
         });
       }
       console.error('Erro ao criar usuário:', err);
@@ -125,14 +183,42 @@ module.exports = (User) => {
     }
   });
 
-  // ✅ Rota: atualizar usuário
+  // ✅ Rota: atualizar usuário COM VALIDAÇÃO DE CPF ÚNICO
   router.put("/:id", async (req, res) => {
     try {
       const user = await User.findByPk(req.params.id);
       if (!user) return res.status(404).json({ success: false, error: "Usuário não encontrado" });
       
-      // Se estiver atualizando senha, validar
-      if (req.body.senha) {
+      // ✅ VALIDAR CPF SE ESTIVER SENDO ATUALIZADO
+      if (req.body.cpf) {
+        const cpfLimpo = req.body.cpf.replace(/\D/g, '');
+        if (!validarCPF(cpfLimpo)) {
+          return res.status(400).json({ 
+            success: false, 
+            error: "CPF inválido" 
+          });
+        }
+
+        // ✅ VERIFICAR SE CPF JÁ EXISTE (EDIÇÃO - EXCLUINDO O PRÓPRIO USUÁRIO)
+        const cpfExistente = await User.findOne({
+          where: { 
+            cpf: cpfLimpo,
+            id: { [require('sequelize').Op.ne]: req.params.id } // Excluir o próprio usuário da verificação
+          }
+        });
+
+        if (cpfExistente) {
+          return res.status(400).json({ 
+            success: false, 
+            error: "CPF já cadastrado no sistema" 
+          });
+        }
+
+        req.body.cpf = cpfLimpo;
+      }
+      
+      // ✅ SENHA NÃO É OBRIGATÓRIA NA EDIÇÃO - APENAS SE FOR FORNECIDA
+      if (req.body.senha && req.body.senha.trim() !== '') {
         if (req.body.senha.length < 5) {
           return res.status(400).json({ 
             success: false, 
@@ -149,6 +235,9 @@ module.exports = (User) => {
             error: "Senha deve conter letras e números" 
           });
         }
+      } else {
+        // ❌ REMOVER SENHA DO UPDATE SE ESTIVER VAZIA (não atualizar senha)
+        delete req.body.senha;
       }
       
       await user.update(req.body);
@@ -169,6 +258,12 @@ module.exports = (User) => {
         message: "Usuário atualizado com sucesso!" 
       });
     } catch (err) {
+      if (err.name === 'SequelizeUniqueConstraintError') {
+        return res.status(400).json({ 
+          success: false, 
+          error: "CPF já cadastrado no sistema" 
+        });
+      }
       console.error('Erro ao atualizar usuário:', err);
       res.status(400).json({ success: false, error: "Erro ao atualizar usuário", details: err.message });
     }
