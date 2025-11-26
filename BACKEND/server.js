@@ -38,22 +38,32 @@ Feedback.belongsTo(User, {
 
 const app = express();
 
-// ✅ CONFIGURAÇÃO CORRETA DO CORS
-app.use(cors({
+// ✅ CONFIGURAÇÃO CORRETA DO CORS (APÓS app = express())
+const corsOptions = {
   origin: ['http://localhost', 'http://127.0.0.1', 'http://localhost:5500', 'http://127.0.0.1:5500'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+};
 
+// ✅ MIDDLEWARES NA ORDEM CORRETA
+app.use(cors(corsOptions)); // ✅ CORREÇÃO: Use cors com options diretamente
+
+// Middleware para headers CORS adicionais
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // ✅ CORREÇÃO: Responder imediatamente para requisições OPTIONS
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   next();
 });
 
-app.options('*', cors());
 app.use(bodyParser.json());
 
 // ✅ ROTA DE TESTE
